@@ -1,0 +1,41 @@
+{
+  "$schema": "https://turborepo.dev/schema.json",
+  "ui": "tui",
+  "globalDependencies": [
+    "**/.env.*local"
+  ], // 当本地 .env 文件变化时，全局缓存失效。
+  "tasks": {
+    "build": {
+      "dependsOn": [
+        "^build"
+      ],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        ".env*"
+      ],
+      "outputs": [
+        "dist/**",
+        "!.dist/cache/**"
+      ] // Vite 和 NestJS 构建产物都在 dist 目录下。
+    },
+    "lint": {
+      "dependsOn": [
+        "^build"
+      ], // 确保在lint检查之前，依赖的共享包已经构建完毕，避免因类型定义缺失而报错。
+      "outputs": []
+    },
+    "check-types": {
+      "dependsOn": [
+        "^build"
+      ], // 确保在类型检查之前，依赖的共享包已经构建完毕，避免因类型定义缺失而报错。
+      "outputs": []
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "clean": {
+      "cache": false
+    }
+  }
+}
