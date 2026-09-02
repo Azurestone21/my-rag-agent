@@ -1,48 +1,57 @@
 import { create } from 'zustand'
-import { chunks as initialChunks, type ChunkItem } from '@/mock/data'
+import type { ChunkDto } from '@my-rag-agent/shared'
+import { api } from '@/service'
 
 type ChunkState = {
-  chunks: ChunkItem[]
+  chunks: ChunkDto[]
   selectedDocumentId: string
   searchQuery: string
+  loading: boolean
+  load: (documentId?: string) => Promise<void>
   setSelectedDocumentId: (id: string) => void
   setSearchQuery: (query: string) => void
-  addChunk: (content: string) => void
-  updateChunk: (chunkId: string, index: number, content: string) => void
-  deleteChunk: (chunkId: string, index: number) => void
+  add: (documentId: string, content: string) => Promise<void>
+  update: (id: string, content: string) => Promise<void>
+  remove: (id: string) => Promise<void>
 }
 
 export const useChunkStore = create<ChunkState>((set) => ({
-  chunks: initialChunks,
+  chunks: [],
   selectedDocumentId: '',
   searchQuery: '',
+  loading: false,
+  load: async (documentId) => {
+    set({ loading: true })
+    try {
+      const chunks = await api.chunk.list(documentId)
+      set({ chunks, loading: false })
+    } catch (error) {
+      set({ loading: false })
+      throw error
+    }
+  },
   setSelectedDocumentId: (id) => set({ selectedDocumentId: id }),
   setSearchQuery: (query) => set({ searchQuery: query }),
-  addChunk: (content) =>
-    set((state) => {
-      const maxIndex = state.chunks.reduce((max, c) => Math.max(max, c.index), -1)
-      const chunk: ChunkItem = {
-        id: `doc-${Date.now()}`,
-        documentId: state.selectedDocumentId || 'doc-75d132b9-c537-421e-9222-8c1aa0ebab7',
-        index: maxIndex + 1,
-        content,
-        charCount: content.length,
-        updatedAt: '2026/08/31 00:00',
-      }
-      return { chunks: [...state.chunks, chunk] }
-    }),
-  updateChunk: (chunkId, index, content) =>
+  add: async (documentId, content) => {
+    const chunk = await api.chunk.create(documentId, content)
+    set((state) => ({
+      chunks: [...state.chunks, chunk].sort(
+        (a, b) => a.index - b.index,
+      ),
+    }))
+  },
+  update: async (id, content) => {
+    const updated = await api.chunk.update(id, content)
     set((state) => ({
       chunks: state.chunks.map((chunk) =>
-        chunk.id === chunkId && chunk.index === index
-          ? { ...chunk, content, charCount: content.length }
-          : chunk,
+        chunk.id === id ? updated : chunk,
       ),
-    })),
-  deleteChunk: (chunkId, index) =>
+    }))
+  },
+  remove: async (id) => {
+    await api.chunk.delete(id)
     set((state) => ({
-      chunks: state.chunks.filter(
-        (chunk) => !(chunk.id === chunkId && chunk.index === index),
-      ),
-    })),
+      chunks: state.chunks.filter((chunk) => chunk.id !== id),
+    }))
+  },
 }))

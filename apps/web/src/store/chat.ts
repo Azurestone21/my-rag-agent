@@ -1,64 +1,92 @@
 import { create } from 'zustand'
-import {
-  chatMessages as initialMessages,
-  defaultSearchParams,
-  mockSearchResults,
-  serviceCalls as initialServiceCalls,
-  type ChatMessage,
-  type SearchParams,
-  type ServiceCall,
-} from '@/mock/data'
+import type {
+  ChatMessageDto,
+  SearchParamsDto,
+  ServiceCallDto,
+} from '@my-rag-agent/shared'
+import { api } from '@/service'
 
-type ChatState = {
-  params: SearchParams
-  setParams: (params: Partial<SearchParams>) => void
-  messages: ChatMessage[]
-  serviceCalls: ServiceCall[]
-  sendMessage: (content: string) => void
-  createServiceCall: (name: string, topK: number) => ServiceCall
-  deleteServiceCall: (id: string) => void
+const defaultParams: SearchParamsDto = {
+  resultCount: 10,
+  minSimilarity: 0,
+  rerankModel: '暂不启用',
+  denseWeight: 0.5,
 }
 
-export const useChatStore = create<ChatState>((set) => ({
-  params: defaultSearchParams,
-  setParams: (params) => set((state) => ({ params: { ...state.params, ...params } })),
-  messages: initialMessages,
-  serviceCalls: initialServiceCalls,
-  sendMessage: (content) =>
-    set((state) => {
-      const userMessage: ChatMessage = {
-        id: `msg-${Date.now()}`,
-        role: 'user',
-        content,
-        createdAt: '2026/08/31 00:00',
-      }
-      const assistantMessage: ChatMessage = {
+type ChatState = {
+  params: SearchParamsDto
+  setParams: (params: Partial<SearchParamsDto>) => void
+  messages: ChatMessageDto[]
+  serviceCalls: ServiceCallDto[]
+  loading: boolean
+  loadServiceCalls: () => Promise<void>
+  sendMessage: (knowledgeBaseId: string, content: string) => Promise<void>
+  createServiceCall: (
+    name: string,
+    knowledgeBaseId: string,
+    topK: number,
+  ) => Promise<ServiceCallDto>
+  deleteServiceCall: (id: string) => Promise<void>
+}
+
+function now(): string {
+  return new Date().toISOString()
+}
+
+export const useChatStore = create<ChatState>((set, get) => ({
+  params: defaultParams,
+  setParams: (params) =>
+    set((state) => ({ params: { ...state.params, ...params } })),
+  messages: [],
+  serviceCalls: [],
+  loading: false,
+  loadServiceCalls: async () => {
+    const serviceCalls = await api.serviceCall.list()
+    set({ serviceCalls })
+  },
+  sendMessage: async (knowledgeBaseId, content) => {
+    const userMessage: ChatMessageDto = {
+      id: `msg-${Date.now()}`,
+      role: 'user',
+      content,
+      createdAt: now(),
+    }
+    set((state) => ({ messages: [...state.messages, userMessage] }))
+    set({ loading: true })
+    try {
+      const { params } = get()
+      const answer = await api.chat.run({
+        knowledgeBaseId,
+        query: content,
+        topK: params.resultCount,
+        minSimilarity: params.minSimilarity,
+        temperature: 0.3,
+      })
+      const assistantMessage: ChatMessageDto = {
         id: `msg-${Date.now() + 1}`,
         role: 'assistant',
-        content:
-          '已检索到知识库中的相关切片，以下是根据命中的内容整理的回答：\n1. 2019年9月18日售小米9 1台，单价2799元，订单状态为交易成功；\n2. 2019年9月15日，Redmi Note 8 Pro 5台，单价1399元，订单状态为交易成功。\n我可以阅读知识库的资料并使用自然语言回答你的问题。',
-        sources: mockSearchResults,
-        createdAt: '2026/08/31 00:00',
+        content: answer.answer,
+        sources: answer.sources,
+        createdAt: now(),
       }
-      return {
-        messages: [...state.messages, userMessage, assistantMessage],
-      }
-    }),
-  createServiceCall: (name, topK) => {
-    const serviceCall: ServiceCall = {
-      id: `svc_${Date.now()}`,
-      name,
-      topK,
-      apiKey: `mk-${Math.random().toString(36).slice(2, 18)}`,
-      createdAt: '2026/08/31 00:00',
+      set((state) => ({
+        messages: [...state.messages, assistantMessage],
+        loading: false,
+      }))
+    } catch (error) {
+      set({ loading: false })
+      throw error
     }
-    set((state) => ({
-      serviceCalls: [...state.serviceCalls, serviceCall],
-    }))
-    return serviceCall
   },
-  deleteServiceCall: (id) =>
+  createServiceCall: async (name, knowledgeBaseId, topK) => {
+    const service = await api.serviceCall.create(name, knowledgeBaseId, topK)
+    set((state) => ({ serviceCalls: [...state.serviceCalls, service] }))
+    return service
+  },
+  deleteServiceCall: async (id) => {
+    await api.serviceCall.delete(id)
     set((state) => ({
       serviceCalls: state.serviceCalls.filter((svc) => svc.id !== id),
-    })),
+    }))
+  },
 }))

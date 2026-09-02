@@ -1,36 +1,41 @@
 import { create } from 'zustand'
-import { documents as initialDocuments, type DocumentItem } from '@/mock/data'
+import type { DocumentDto } from '@my-rag-agent/shared'
+import { api } from '@/service'
 
 type DocumentState = {
-  documents: DocumentItem[]
+  documents: DocumentDto[]
   searchQuery: string
+  loading: boolean
+  load: (knowledgeBaseId?: string) => Promise<void>
   setSearchQuery: (query: string) => void
-  uploadDocument: (name: string) => void
-  deleteDocument: (id: string) => void
+  upload: (knowledgeBaseId: string, file: File) => Promise<DocumentDto>
+  remove: (id: string) => Promise<void>
 }
 
 export const useDocumentStore = create<DocumentState>((set) => ({
-  documents: initialDocuments,
+  documents: [],
   searchQuery: '',
+  loading: false,
+  load: async (knowledgeBaseId) => {
+    set({ loading: true })
+    try {
+      const documents = await api.document.list(knowledgeBaseId)
+      set({ documents, loading: false })
+    } catch (error) {
+      set({ loading: false })
+      throw error
+    }
+  },
   setSearchQuery: (query) => set({ searchQuery: query }),
-  uploadDocument: (name) =>
-    set((state) => ({
-      documents: [
-        {
-          id: `doc-${Date.now()}`,
-          knowledgeBaseId: 'kb_my-rag-agent',
-          name,
-          status: 'processing',
-          strategy: 'my-rag-agent-init-version',
-          chunkCount: 0,
-          importMethod: '本地上传',
-          updatedAt: '2026/08/31 00:00',
-        },
-        ...state.documents,
-      ],
-    })),
-  deleteDocument: (id) =>
+  upload: async (knowledgeBaseId, file) => {
+    const doc = await api.document.upload(knowledgeBaseId, file)
+    set((state) => ({ documents: [doc, ...state.documents] }))
+    return doc
+  },
+  remove: async (id) => {
+    await api.document.delete(id)
     set((state) => ({
       documents: state.documents.filter((doc) => doc.id !== id),
-    })),
+    }))
+  },
 }))
