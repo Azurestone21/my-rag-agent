@@ -12,12 +12,13 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useChatStore } from '@/store/chat'
-import type { ServiceCall } from '@/mock/data'
+import { useKnowledgeBaseStore } from '@/store/knowledgeBase'
+import type { ServiceCallDto } from '@my-rag-agent/shared'
 
 type CreateServiceCallDialogProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
-  onCreated: (service: ServiceCall) => void
+  onCreated: (service: ServiceCallDto) => void
 }
 
 export default function CreateServiceCallDialog({
@@ -29,19 +30,32 @@ export default function CreateServiceCallDialog({
   const [topK, setTopK] = useState(10)
   const [purpose, setPurpose] = useState('')
   const createServiceCall = useChatStore((state) => state.createServiceCall)
+  const selectedKbId = useKnowledgeBaseStore((state) => state.selectedKbId)
 
-  const handleCreate = () => {
+  const handleCreate = async () => {
     if (!name.trim()) {
       toast.error('请输入服务名称')
       return
     }
-    const service = createServiceCall(name.trim(), Math.max(1, topK))
-    toast.success(`问答 API「${name.trim()}」生成成功`)
-    setName('')
-    setTopK(10)
-    setPurpose('')
-    onOpenChange(false)
-    onCreated(service)
+    if (!selectedKbId) {
+      toast.error('请先选择知识库')
+      return
+    }
+    try {
+      const service = await createServiceCall(
+        name.trim(),
+        selectedKbId,
+        Math.max(1, topK),
+      )
+      toast.success(`问答 API「${name.trim()}」生成成功`)
+      setName('')
+      setTopK(10)
+      setPurpose('')
+      onOpenChange(false)
+      onCreated(service)
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : '生成失败')
+    }
   }
 
   return (

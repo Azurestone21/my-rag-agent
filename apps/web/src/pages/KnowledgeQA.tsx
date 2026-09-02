@@ -1,19 +1,24 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import SearchParamsPanel from '@/components/params/SearchParamsPanel'
 import ApiCallDialog from '@/components/qa/ApiCallDialog'
 import ChatPanel from '@/components/qa/ChatPanel'
 import ServiceCallSection from '@/components/qa/ServiceCallSection'
 import SourcesPanel from '@/components/qa/SourcesPanel'
 import { useChatStore } from '@/store/chat'
-import type { ServiceCall } from '@/mock/data'
+import type { ServiceCallDto } from '@my-rag-agent/shared'
 
 export default function KnowledgeQAPage() {
   const params = useChatStore((state) => state.params)
   const setParams = useChatStore((state) => state.setParams)
-  const [viewingService, setViewingService] = useState<ServiceCall | null>(null)
+  const loadServiceCalls = useChatStore((state) => state.loadServiceCalls)
+  const [viewingService, setViewingService] = useState<ServiceCallDto | null>(null)
   const [apiOpen, setApiOpen] = useState(false)
 
-  const handleViewService = (service: ServiceCall) => {
+  useEffect(() => {
+    void loadServiceCalls().catch(() => undefined)
+  }, [loadServiceCalls])
+
+  const handleViewService = (service: ServiceCallDto) => {
     setViewingService(service)
     setApiOpen(true)
   }
@@ -33,7 +38,7 @@ export default function KnowledgeQAPage() {
         <ChatPanel />
       </div>
 
-      <aside className="w-72 shrink-0">
+      <aside className="flex h-full min-h-0 w-72 shrink-0 flex-col">
         <SourcesPanel />
       </aside>
 

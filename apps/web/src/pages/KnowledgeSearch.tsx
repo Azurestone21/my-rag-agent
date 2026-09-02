@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useSearchStore } from '@/store/search'
+import { useKnowledgeBaseStore } from '@/store/knowledgeBase'
 
 export default function KnowledgeSearchPage() {
   const params = useSearchStore((state) => state.params)
@@ -12,6 +13,8 @@ export default function KnowledgeSearchPage() {
   const results = useSearchStore((state) => state.results)
   const history = useSearchStore((state) => state.history)
   const runSearch = useSearchStore((state) => state.runSearch)
+  const setQuery = useSearchStore((state) => state.setQuery)
+  const selectedKbId = useKnowledgeBaseStore((state) => state.selectedKbId)
 
   return (
     <div className="space-y-4">
@@ -32,7 +35,7 @@ export default function KnowledgeSearchPage() {
             className="flex gap-2"
             onSubmit={(event) => {
               event.preventDefault()
-              runSearch(query)
+              void runSearch(selectedKbId)
             }}
           >
             <div className="relative flex-1">
@@ -41,7 +44,7 @@ export default function KnowledgeSearchPage() {
                 className="pl-9 bg-white"
                 placeholder="输入查询内容，例如：小米 9 的销售记录"
                 value={query}
-                onChange={(event) => runSearch(event.target.value)}
+                onChange={(event) => setQuery(event.target.value)}
               />
             </div>
             <Button type="submit">
@@ -61,9 +64,11 @@ export default function KnowledgeSearchPage() {
                   <Button
                     key={item}
                     variant="outline"
-                    size="sm"
-                    className="rounded-full"
-                    onClick={() => runSearch(item)}
+                    className="h-auto rounded px-2 py-1 text-xs"
+                    onClick={() => {
+                      setQuery(item)
+                      void runSearch(selectedKbId)
+                    }}
                   >
                     {item}
                   </Button>

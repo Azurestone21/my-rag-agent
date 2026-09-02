@@ -9,12 +9,12 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Slider } from '@/components/ui/slider'
-import type { SearchParams } from '@/mock/data'
+import type { SearchParamsDto } from '@my-rag-agent/shared'
 
 type SearchParamsPanelProps = {
   title?: string
-  params: SearchParams
-  onChange: (params: Partial<SearchParams>) => void
+  params: SearchParamsDto
+  onChange: (params: Partial<SearchParamsDto>) => void
 }
 
 export default function SearchParamsPanel({

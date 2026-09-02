@@ -4,10 +4,10 @@ import { toast } from 'sonner'
 import CreateServiceCallDialog from '@/components/qa/CreateServiceCallDialog'
 import { Button } from '@/components/ui/button'
 import { useChatStore } from '@/store/chat'
-import type { ServiceCall } from '@/mock/data'
+import type { ServiceCallDto } from '@my-rag-agent/shared'
 
 type ServiceCallSectionProps = {
-  onViewService: (service: ServiceCall) => void
+  onViewService: (service: ServiceCallDto) => void
 }
 
 export default function ServiceCallSection({
@@ -56,8 +56,9 @@ export default function ServiceCallSection({
                   size="icon-xs"
                   className="shrink-0 text-text-muted hover:text-red-600"
                   onClick={() => {
-                    deleteServiceCall(service.id)
-                    toast.success(`服务「${service.name}」已删除`)
+                    void deleteServiceCall(service.id)
+                      .then(() => toast.success(`服务「${service.name}」已删除`))
+                      .catch((error: Error) => toast.error(error.message))
                   }}
                 >
                   <Trash2 />

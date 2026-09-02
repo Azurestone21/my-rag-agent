@@ -11,12 +11,12 @@ export default function SourcesPanel() {
   const sources = lastAssistant?.sources ?? []
 
   return (
-    <div className="rounded-lg border border-border-subtle bg-panel p-4">
-      <div className="flex items-center gap-2">
+    <div className="flex h-full min-h-0 flex-col rounded-lg border border-border-subtle bg-panel p-4">
+      <div className="flex shrink-0 items-center gap-2">
         <Library className="size-4 text-primary-600" />
         <h2 className="text-sm font-semibold text-text-main">引用来源</h2>
       </div>
-      <p className="mt-1 text-xs leading-relaxed text-text-muted">
+      <p className="mt-1 shrink-0 text-xs leading-relaxed text-text-muted">
         回答使用的命中切片固定展示在右侧
       </p>
 
@@ -28,8 +28,8 @@ export default function SourcesPanel() {
           </p>
         </div>
       ) : (
-        <ScrollArea className="mt-3 max-h-[calc(100vh-20rem)]">
-          <div className="space-y-3">
+        <ScrollArea className="mt-3 flex-1 min-h-0">
+          <div className="space-y-3 pr-1">
             {sources.map((source, index) => (
               <div
                 key={`${source.chunkId}-${index}`}

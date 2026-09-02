@@ -1,12 +1,15 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react'
 import { Bot, Send } from 'lucide-react'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { useChatStore } from '@/store/chat'
+import { useKnowledgeBaseStore } from '@/store/knowledgeBase'
 
 export default function ChatPanel() {
   const messages = useChatStore((state) => state.messages)
   const sendMessage = useChatStore((state) => state.sendMessage)
+  const selectedKbId = useKnowledgeBaseStore((state) => state.selectedKbId)
   const [input, setInput] = useState('')
   const scrollRef = useRef<HTMLDivElement>(null)
 
@@ -19,7 +22,13 @@ export default function ChatPanel() {
 
   const handleSend = () => {
     if (!input.trim()) return
-    sendMessage(input.trim())
+    if (!selectedKbId) {
+      toast.error('请先选择知识库')
+      return
+    }
+    void sendMessage(selectedKbId, input.trim()).catch((error: Error) => {
+      toast.error(error.message)
+    })
     setInput('')
   }
 

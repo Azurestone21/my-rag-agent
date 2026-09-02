@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Database, Trash2 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import CreateKnowledgeBaseButton from '@/components/layout/CreateKnowledgeBaseButton'
+import type { KnowledgeBaseDto } from '@my-rag-agent/shared'
+import KnowledgeBaseDialog from '@/components/business/CreateKnowledgeBaseButton'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -13,25 +14,34 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { useKnowledgeBaseStore } from '@/store/knowledgeBase'
-import type { KnowledgeBase } from '@/mock/data'
+import { formatDateTime } from '@/lib/format'
 
 export default function KnowledgeBasePage() {
   const knowledgeBases = useKnowledgeBaseStore((state) => state.knowledgeBases)
   const selectKb = useKnowledgeBaseStore((state) => state.selectKb)
   const deleteKb = useKnowledgeBaseStore((state) => state.deleteKb)
+  const load = useKnowledgeBaseStore((state) => state.load)
   const navigate = useNavigate()
-  const [deletingKb, setDeletingKb] = useState<KnowledgeBase | null>(null)
+  const [deletingKb, setDeletingKb] = useState<KnowledgeBaseDto | null>(null)
 
-  const handleOpen = (kb: KnowledgeBase) => {
+  useEffect(() => {
+    void load().catch(() => undefined)
+  }, [load])
+
+  const handleOpen = (kb: KnowledgeBaseDto) => {
     selectKb(kb.id)
     navigate('/documents')
   }
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!deletingKb) return
-    deleteKb(deletingKb.id)
-    toast.success(`知识库「${deletingKb.name}」已删除`)
-    setDeletingKb(null)
+    try {
+      await deleteKb(deletingKb.id)
+      toast.success(`知识库「${deletingKb.name}」已删除`)
+      setDeletingKb(null)
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : '删除失败')
+    }
   }
 
   return (
@@ -43,7 +53,7 @@ export default function KnowledgeBasePage() {
             共 {knowledgeBases.length} 个知识库
           </p>
         </div>
-        <CreateKnowledgeBaseButton />
+        <KnowledgeBaseDialog />
       </div>
 
       {knowledgeBases.length === 0 ? (
@@ -92,22 +102,25 @@ export default function KnowledgeBasePage() {
                 </span>
               </div>
               <div className="mt-1 text-xs text-text-muted">
-                更新于 {kb.updatedAt}
+                更新于 {formatDateTime(kb.updatedAt)}
               </div>
 
               <div className="mt-4 flex items-center justify-between border-t border-border-subtle pt-3">
                 <Button variant="outline" size="sm" onClick={() => handleOpen(kb)}>
                   进入知识库
                 </Button>
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  className="text-text-muted hover:text-red-600"
-                  onClick={() => setDeletingKb(kb)}
-                  aria-label={`删除知识库 ${kb.name}`}
-                >
-                  <Trash2 />
-                </Button>
+                <div className="flex items-center gap-1">
+                  <KnowledgeBaseDialog kb={kb} />
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    className="text-text-muted hover:text-red-600"
+                    onClick={() => setDeletingKb(kb)}
+                    aria-label={`删除知识库 ${kb.name}`}
+                  >
+                    <Trash2 />
+                  </Button>
+                </div>
               </div>
             </div>
           ))}

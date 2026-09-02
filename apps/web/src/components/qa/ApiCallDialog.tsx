@@ -10,10 +10,10 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
-import type { ServiceCall } from '@/mock/data'
+import type { ServiceCallDto } from '@my-rag-agent/shared'
 
 type ApiCallDialogProps = {
-  service: ServiceCall | null
+  service: ServiceCallDto | null
   open: boolean
   onOpenChange: (open: boolean) => void
 }

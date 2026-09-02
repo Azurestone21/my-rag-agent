@@ -1,7 +1,8 @@
-import { useRef, useState, type ChangeEvent } from 'react'
+import { useEffect, useRef, useState, type ChangeEvent } from 'react'
 import { FileText, Search, Trash2, Upload } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
+import type { DocumentStatus } from '@my-rag-agent/shared'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -22,13 +23,19 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { cn } from '@/lib/utils'
+import { formatDateTime } from '@/lib/format'
+import { api } from '@/service'
 import { useDocumentStore } from '@/store/document'
-import type { DocumentStatus } from '@/mock/data'
+import { useKnowledgeBaseStore } from '@/store/knowledgeBase'
 
 const statusMap: Record<
   DocumentStatus,
   { label: string; className: string }
 > = {
+  pending: {
+    label: '待处理',
+    className: 'bg-slate-50 text-slate-600 border-slate-200',
+  },
   processing: {
     label: '处理中',
     className: 'bg-amber-50 text-amber-600 border-amber-200',
@@ -43,27 +50,40 @@ const statusMap: Record<
   },
 }
 
-function UploadDocumentDialog() {
+function UploadDocumentDialog({ knowledgeBaseId }: { knowledgeBaseId: string }) {
   const [open, setOpen] = useState(false)
-  const [fileName, setFileName] = useState('')
+  const [file, setFile] = useState<File | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
-  const uploadDocument = useDocumentStore((state) => state.uploadDocument)
+  const upload = useDocumentStore((state) => state.upload)
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (file) setFileName(file.name)
+    setFile(event.target.files?.[0] ?? null)
   }
 
-  const handleUpload = () => {
-    if (!fileName) {
+  const handleUpload = async () => {
+    if (!file) {
       toast.error('请先选择文件')
       return
     }
-    uploadDocument(fileName)
-    toast.success(`文档「${fileName}」上传成功，正在处理`)
-    setFileName('')
-    setOpen(false)
-    if (inputRef.current) inputRef.current.value = ''
+    if (!knowledgeBaseId) {
+      toast.error('请先选择知识库')
+      return
+    }
+    try {
+      const doc = await upload(knowledgeBaseId, file)
+      toast.success(`文档「${doc.name}」上传成功`)
+      setFile(null)
+      setOpen(false)
+      if (inputRef.current) inputRef.current.value = ''
+      setTimeout(() => {
+        void useDocumentStore
+          .getState()
+          .load(knowledgeBaseId)
+          .catch(() => undefined)
+      }, 3000)
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : '上传失败')
+    }
   }
 
   return (
@@ -88,7 +108,7 @@ function UploadDocumentDialog() {
           >
             <FileText className="size-8 text-text-muted" />
             <span className="text-sm font-medium text-text-main">
-              {fileName || '点击选择文件'}
+              {file ? file.name : '点击选择文件'}
             </span>
             <span className="text-xs text-text-muted">
               支持 CSV、XLSX、XLS 格式
@@ -105,7 +125,7 @@ function UploadDocumentDialog() {
             <Button variant="outline" onClick={() => setOpen(false)}>
               取消
             </Button>
-            <Button onClick={handleUpload} disabled={!fileName}>
+            <Button onClick={handleUpload} disabled={!file}>
               确认上传
             </Button>
           </DialogFooter>
@@ -119,7 +139,13 @@ export default function DocumentManagePage() {
   const documents = useDocumentStore((state) => state.documents)
   const searchQuery = useDocumentStore((state) => state.searchQuery)
   const setSearchQuery = useDocumentStore((state) => state.setSearchQuery)
-  const deleteDocument = useDocumentStore((state) => state.deleteDocument)
+  const load = useDocumentStore((state) => state.load)
+  const remove = useDocumentStore((state) => state.remove)
+  const selectedKbId = useKnowledgeBaseStore((state) => state.selectedKbId)
+
+  useEffect(() => {
+    void load(selectedKbId || undefined).catch(() => undefined)
+  }, [selectedKbId, load])
 
   const filteredDocuments = documents.filter(
     (doc) =>
@@ -127,9 +153,23 @@ export default function DocumentManagePage() {
       doc.id.toLowerCase().includes(searchQuery.toLowerCase()),
   )
 
-  const handleDelete = (id: string, name: string) => {
-    deleteDocument(id)
-    toast.success(`文档「${name}」已删除`)
+  const handleDelete = async (id: string, name: string) => {
+    try {
+      await remove(id)
+      toast.success(`文档「${name}」已删除`)
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : '删除失败')
+    }
+  }
+
+  const handleProcess = async (id: string) => {
+    try {
+      await api.chunk.process(id)
+      toast.success('切片处理完成')
+      await load(selectedKbId || undefined)
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : '处理失败')
+    }
   }
 
   return (
@@ -151,21 +191,21 @@ export default function DocumentManagePage() {
               onChange={(event) => setSearchQuery(event.target.value)}
             />
           </div>
-          <UploadDocumentDialog />
+          <UploadDocumentDialog knowledgeBaseId={selectedKbId} />
         </div>
       </div>
 
       <div className="overflow-hidden rounded-lg border border-border-subtle bg-panel">
         <Table>
-          <TableHeader className="bg-muted/40">
+          <TableHeader>
             <TableRow className="hover:bg-transparent">
-              <TableHead className="px-4">文档名称 / ID</TableHead>
-              <TableHead>文档状态</TableHead>
-              <TableHead>处理策略</TableHead>
-              <TableHead>切片数</TableHead>
-              <TableHead>导入方式</TableHead>
-              <TableHead>更新时间</TableHead>
-              <TableHead className="text-right">操作</TableHead>
+              <TableHead className="whitespace-nowrap bg-muted px-4">文档名称 / ID</TableHead>
+              <TableHead className="whitespace-nowrap bg-muted">文档状态</TableHead>
+              <TableHead className="whitespace-nowrap bg-muted">处理策略</TableHead>
+              <TableHead className="whitespace-nowrap bg-muted">切片数</TableHead>
+              <TableHead className="whitespace-nowrap bg-muted">导入方式</TableHead>
+              <TableHead className="whitespace-nowrap bg-muted">更新时间</TableHead>
+              <TableHead className="sticky right-0 bg-muted text-right shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.1)]">操作</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -183,7 +223,7 @@ export default function DocumentManagePage() {
                 const status = statusMap[doc.status]
                 return (
                   <TableRow key={doc.id}>
-                    <TableCell className="px-4">
+                    <TableCell className="whitespace-nowrap px-4">
                       <div className="flex items-center gap-2.5">
                         <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-primary-50 text-primary-600">
                           <FileText className="size-4" />
@@ -198,25 +238,34 @@ export default function DocumentManagePage() {
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="whitespace-nowrap">
                       <Badge variant="outline" className={status.className}>
                         {status.label}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-text-secondary">
+                    <TableCell className="whitespace-nowrap">
                       {doc.strategy}
                     </TableCell>
-                    <TableCell className="text-text-secondary">
+                    <TableCell className="whitespace-nowrap">
                       {doc.chunkCount}
                     </TableCell>
-                    <TableCell className="text-text-secondary">
+                    <TableCell className="whitespace-nowrap">
                       {doc.importMethod}
                     </TableCell>
-                    <TableCell className="text-text-secondary">
-                      {doc.updatedAt}
+                    <TableCell className="whitespace-nowrap">
+                      {formatDateTime(doc.updatedAt)}
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="sticky right-0 bg-panel text-right shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.1)]">
                       <div className="flex items-center justify-end gap-1">
+                        {(doc.status === 'pending' || doc.status === 'failed') && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleProcess(doc.id)}
+                          >
+                            处理
+                          </Button>
+                        )}
                         <Button variant="ghost" size="sm" asChild>
                           <Link to="/chunks">切片详情</Link>
                         </Button>
