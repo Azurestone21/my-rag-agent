@@ -12,10 +12,10 @@ export default function AppLayout() {
         collapsed={sidebarCollapsed}
         onToggle={() => setSidebarCollapsed((value) => !value)}
       />
-      <main className="min-w-0 flex-1 overflow-auto bg-page p-6">
+      <main className="min-w-0 flex-1 overflow-hidden bg-page p-6">
         <Outlet />
       </main>
-      <Toaster />
+      <Toaster richColors />
     </div>
   )
 }
