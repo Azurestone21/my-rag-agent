@@ -36,14 +36,14 @@ pnpm build              # 构建（根目录或 apps/web）
 - 复用组件：`src/components/params/`、`src/components/qa/`
 - shadcn 组件：`src/components/ui/`（不要改这些组件的默认导出约定）
 - 状态：`src/store/`（Zustand，按知识库/文档/切片/检索/问答拆分）
-- mock 数据与类型：`src/mock/data.ts`
+- 类型与数据模型：~~`src/mock/data.ts`~~（已删除，改用共享包 `@my-rag-agent/shared` 的 DTO 类型 + 真实 API）
 - 主题：`src/index.css`（Tailwind v4 入口；主色 #5a55ff、页面背景 #f6fafd）
 - 路由：`src/router/index.tsx`
 
 ## 当前状态（2026-08-31）
 
 - 前端计划 6 步已全部完成，`pnpm build` 通过
-- 前端目前全部使用 mock 数据，尚未对接后端真实 API
+- 前端已接入后端真实 API（~~全部使用 mock 数据，尚未对接后端真实 API~~）
 - 布局：无顶部栏；侧边栏为"当前知识库"下拉 + 4 个子导航（缩进、小一号字号），可折叠
 - 知识库页已实现（卡片网格 + 创建/删除）；切片卡片支持来源文件、查看原文/编辑/删除；知识检索页含标题
 - 待办：本地预览、代码分割（消除 500 kB chunk 警告）、后端联调
