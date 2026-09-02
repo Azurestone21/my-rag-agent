@@ -1,0 +1,11 @@
+.git
+**/node_modules
+node_modules
+.pnpm-store
+**/dist
+**/.turbo
+**/*.tsbuildinfo
+uploads
+.env
+.env.*
+*.log
