@@ -15,9 +15,9 @@
   --color-page: #f6fafd;
   --color-panel: #ffffff;
   --color-border-subtle: #e5e8ee;
-  --color-text-main: #1f2430;
-  --color-text-secondary: #6b7280;
-  --color-text-muted: #9ca3af;
+  --color-text-main: #222222;
+  --color-text-secondary: #666666;
+  --color-text-muted: #999999;
 }
 
 @theme inline {
@@ -47,17 +47,17 @@
 
 :root {
   --background: #ffffff;
-  --foreground: #1f2430;
+  --foreground: #222222;
   --card: #ffffff;
-  --card-foreground: #1f2430;
+  --card-foreground: #222222;
   --popover: #ffffff;
-  --popover-foreground: #1f2430;
+  --popover-foreground: #222222;
   --primary: #3b82f6;
   --primary-foreground: #ffffff;
   --secondary: #f1f5f9;
-  --secondary-foreground: #1f2430;
+  --secondary-foreground: #222222;
   --muted: #f1f4f8;
-  --muted-foreground: #6b7280;
+  --muted-foreground: #666666;
   --accent: #eff6ff;
   --accent-foreground: #1d4ed8;
   --destructive: #ef4444;

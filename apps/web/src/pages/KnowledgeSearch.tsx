@@ -42,7 +42,7 @@ export default function KnowledgeSearchPage() {
               <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-text-muted" />
               <Input
                 className="pl-9 bg-white"
-                placeholder="输入查询内容，例如：小米 9 的销售记录"
+                placeholder="输入查询内容..."
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
               />
@@ -88,7 +88,7 @@ export default function KnowledgeSearchPage() {
               </p>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="max-h-[calc(100vh-16rem)] space-y-3 overflow-y-auto pr-1">
               {results.map((result) => (
                 <div
                   key={result.chunkId}
