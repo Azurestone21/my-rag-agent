@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -263,7 +262,7 @@ export default function DocumentManagePage() {
                           </Button>
                         )}
                         <Button variant="ghost" size="sm" asChild>
-                          <Link to="/chunks">切片详情</Link>
+                          <Link to={`/chunks?documentId=${doc.id}`}>切片详情</Link>
                         </Button>
                         <Button
                           variant="ghost"

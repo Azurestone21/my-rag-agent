@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { Eye, FileText, Layers, Pencil, Plus, Search, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import type { ChunkDto } from '@my-rag-agent/shared'
@@ -27,9 +28,9 @@ import { formatDateTime } from '@/lib/format'
 
 type ChunkDialogProps =
   | {
-      /** 新增模式 */
-      documentId: string
-      documentName: string
+      /** 新增模式（可传入预设文档） */
+      documentId?: string
+      documentName?: string
       chunk?: never
       trigger?: React.ReactNode
     }
@@ -44,42 +45,59 @@ type ChunkDialogProps =
 function ChunkDialog(props: ChunkDialogProps) {
   const [open, setOpen] = useState(false)
   const [content, setContent] = useState('')
+  const [localDocId, setLocalDocId] = useState(props.documentId ?? '')
   const add = useChunkStore((state) => state.add)
   const update = useChunkStore((state) => state.update)
   const documents = useDocumentStore((state) => state.documents)
   const isEdit = Boolean(props.chunk)
+  const needsDocSelect = !isEdit && !props.documentId
 
   useEffect(() => {
-    if (open) setContent(props.chunk?.content ?? '')
-  }, [open, props.chunk])
+    if (open) {
+      setContent(props.chunk?.content ?? '')
+      setLocalDocId(props.documentId ?? '')
+    }
+  }, [open, props.chunk, props.documentId])
 
   const handleSubmit = async () => {
+    if (!isEdit) {
+      const docId = props.documentId || localDocId
+      if (!docId) {
+        toast.error('请选择要添加到的文档')
+        return
+      }
+      if (!content.trim()) {
+        toast.error('切片内容不能为空')
+        return
+      }
+      try {
+        await add(docId, content.trim())
+        toast.success('切片已新增')
+        setOpen(false)
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : '新增失败')
+      }
+      return
+    }
     if (!content.trim()) {
       toast.error('切片内容不能为空')
       return
     }
     try {
-      if (isEdit) {
-        await update(props.chunk!.id, content.trim())
-        toast.success('切片已更新')
-      } else {
-        if (!props.documentId) {
-          toast.error('请先选择文档')
-          return
-        }
-        await add(props.documentId, content.trim())
-        toast.success('切片已新增')
-      }
+      await update(props.chunk!.id, content.trim())
+      toast.success('切片已更新')
       setOpen(false)
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : (isEdit ? '更新失败' : '新增失败'))
+      toast.error(error instanceof Error ? error.message : '更新失败')
     }
   }
 
   const docNameMap = new Map(documents.map((d) => [d.id, d.name]))
   const description = isEdit
     ? `修改「${docNameMap.get(props.chunk!.documentId) ?? '未知文档'}」中的切片内容`
-    : `为「${props.documentName || '当前文档'}」添加新的文本切片。`
+    : needsDocSelect
+      ? '选择要添加到的文档，然后输入切片内容。'
+      : `为「${props.documentName || '当前文档'}」添加新的文本切片。`
 
   const defaultTrigger = isEdit ? (
     <Button variant="ghost" size="xs">
@@ -103,6 +121,23 @@ function ChunkDialog(props: ChunkDialogProps) {
             <DialogDescription>{description}</DialogDescription>
           </DialogHeader>
           <div className="space-y-2">
+            {needsDocSelect && (
+              <div className="space-y-2">
+                <Label>目标文档</Label>
+                <Select value={localDocId} onValueChange={setLocalDocId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="选择要添加到的文档" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {documents.map((doc) => (
+                      <SelectItem key={doc.id} value={doc.id}>
+                        {doc.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             <Label htmlFor="chunk-content">切片内容</Label>
             <Textarea
               id="chunk-content"
@@ -151,6 +186,15 @@ export default function ChunkManagePage() {
   const documents = useDocumentStore((state) => state.documents)
   const loadDocuments = useDocumentStore((state) => state.load)
   const [viewingChunk, setViewingChunk] = useState<ChunkDto | null>(null)
+  const [searchParams] = useSearchParams()
+
+  // 从 URL 参数读取 documentId，进入页面时自动选中
+  useEffect(() => {
+    const docIdFromUrl = searchParams.get('documentId')
+    if (docIdFromUrl) {
+      setSelectedDocumentId(docIdFromUrl)
+    }
+  }, [searchParams])
 
   useEffect(() => {
     void loadDocuments().catch(() => undefined)
