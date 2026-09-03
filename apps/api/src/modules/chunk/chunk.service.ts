@@ -123,7 +123,7 @@ export class ChunkService {
       content,
       charCount: content.length,
       chunkIndex: maxIndex + 1,
-      embedding: null,
+      embedding: this.toVectorString(await this.embeddings.embedQuery(content)),
     });
     const saved = await this.chunks.save(entity);
     return this.toDto(saved);
@@ -136,6 +136,7 @@ export class ChunkService {
     }
     entity.content = content;
     entity.charCount = content.length;
+    entity.embedding = this.toVectorString(await this.embeddings.embedQuery(content));
     const saved = await this.chunks.save(entity);
     return this.toDto(saved);
   }
