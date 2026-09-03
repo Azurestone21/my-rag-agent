@@ -7,6 +7,7 @@ import {
   Param,
   ParseUUIDPipe,
   Post,
+  Query,
   Res,
 } from '@nestjs/common';
 import type { Response } from 'express';
@@ -30,8 +31,10 @@ export class ServiceCallController {
   }
 
   @Get()
-  findAll(): Promise<ServiceCallDto[]> {
-    return this.service.findAll();
+  findAll(
+    @Query('knowledgeBaseId') knowledgeBaseId?: string,
+  ): Promise<ServiceCallDto[]> {
+    return this.service.findAll(knowledgeBaseId);
   }
 
   @Get(':id')

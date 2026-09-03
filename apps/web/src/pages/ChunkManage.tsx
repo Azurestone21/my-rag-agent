@@ -24,6 +24,7 @@ import {
 import { Textarea } from '@/components/ui/textarea'
 import { useChunkStore } from '@/store/chunk'
 import { useDocumentStore } from '@/store/document'
+import { useKnowledgeBaseStore } from '@/store/knowledgeBase'
 import { formatDateTime } from '@/lib/format'
 
 type ChunkDialogProps =
@@ -187,6 +188,7 @@ export default function ChunkManagePage() {
   const loadDocuments = useDocumentStore((state) => state.load)
   const [viewingChunk, setViewingChunk] = useState<ChunkDto | null>(null)
   const [searchParams] = useSearchParams()
+  const selectedKbId = useKnowledgeBaseStore((state) => state.selectedKbId)
 
   // 从 URL 参数读取 documentId，进入页面时自动选中
   useEffect(() => {
@@ -197,12 +199,15 @@ export default function ChunkManagePage() {
   }, [searchParams])
 
   useEffect(() => {
-    void loadDocuments().catch(() => undefined)
-  }, [loadDocuments])
+    void loadDocuments(selectedKbId || undefined).catch(() => undefined)
+  }, [loadDocuments, selectedKbId])
 
   useEffect(() => {
-    void loadChunks(selectedDocumentId || undefined).catch(() => undefined)
-  }, [selectedDocumentId, loadChunks])
+    void loadChunks(
+      selectedDocumentId || undefined,
+      selectedKbId || undefined,
+    ).catch(() => undefined)
+  }, [selectedDocumentId, selectedKbId, loadChunks])
 
   const docNameMap = new Map(documents.map((doc) => [doc.id, doc.name]))
   const selectedDocName = docNameMap.get(selectedDocumentId) ?? ''

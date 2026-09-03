@@ -26,8 +26,9 @@ export class ServiceCallService {
     return this.toDto(saved);
   }
 
-  async findAll(): Promise<ServiceCallDto[]> {
+  async findAll(knowledgeBaseId?: string): Promise<ServiceCallDto[]> {
     const entities = await this.repository.find({
+      where: knowledgeBaseId ? { knowledgeBaseId } : {},
       order: { createdAt: 'DESC' },
     });
     return entities.map((entity) => this.toDto(entity));

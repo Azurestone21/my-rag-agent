@@ -4,9 +4,10 @@ import { request } from "./request";
 export const serviceCallApi = {
   /**
    * 获取服务调用列表
-   * @returns 服务调用列表
+   * @param knowledgeBaseId 知识库 ID（可选，用于过滤）
    */
-  list: () => request<ServiceCallDto[]>("/service-calls"),
+  list: (knowledgeBaseId?: string) =>
+    request<ServiceCallDto[]>(`/service-calls${knowledgeBaseId ? `?knowledgeBaseId=${knowledgeBaseId}` : ''}`),
   /**
    * 生成问答 API（自动生成 API Key）
    * @param name 服务名称

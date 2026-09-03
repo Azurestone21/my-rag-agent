@@ -7,7 +7,7 @@ type ChunkState = {
   selectedDocumentId: string
   searchQuery: string
   loading: boolean
-  load: (documentId?: string) => Promise<void>
+  load: (documentId?: string, knowledgeBaseId?: string) => Promise<void>
   setSelectedDocumentId: (id: string) => void
   setSearchQuery: (query: string) => void
   add: (documentId: string, content: string) => Promise<void>
@@ -20,10 +20,10 @@ export const useChunkStore = create<ChunkState>((set) => ({
   selectedDocumentId: '',
   searchQuery: '',
   loading: false,
-  load: async (documentId) => {
+  load: async (documentId, knowledgeBaseId) => {
     set({ loading: true })
     try {
-      const chunks = await api.chunk.list(documentId)
+      const chunks = await api.chunk.list(documentId, knowledgeBaseId)
       set({ chunks, loading: false })
     } catch (error) {
       set({ loading: false })

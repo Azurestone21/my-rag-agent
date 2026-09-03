@@ -5,18 +5,25 @@ import ChatPanel from '@/components/qa/ChatPanel'
 import ServiceCallSection from '@/components/qa/ServiceCallSection'
 import SourcesPanel from '@/components/qa/SourcesPanel'
 import { useChatStore } from '@/store/chat'
+import { useKnowledgeBaseStore } from '@/store/knowledgeBase'
 import type { ServiceCallDto } from '@my-rag-agent/shared'
 
 export default function KnowledgeQAPage() {
   const params = useChatStore((state) => state.params)
   const setParams = useChatStore((state) => state.setParams)
   const loadServiceCalls = useChatStore((state) => state.loadServiceCalls)
+  const clearMessages = useChatStore((state) => state.clearMessages)
+  const selectedKbId = useKnowledgeBaseStore((state) => state.selectedKbId)
   const [viewingService, setViewingService] = useState<ServiceCallDto | null>(null)
   const [apiOpen, setApiOpen] = useState(false)
 
   useEffect(() => {
-    void loadServiceCalls().catch(() => undefined)
-  }, [loadServiceCalls])
+    void loadServiceCalls(selectedKbId || undefined).catch(() => undefined)
+  }, [loadServiceCalls, selectedKbId])
+
+  useEffect(() => {
+    clearMessages()
+  }, [selectedKbId, clearMessages])
 
   const handleViewService = (service: ServiceCallDto) => {
     setViewingService(service)

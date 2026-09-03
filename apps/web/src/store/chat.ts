@@ -21,8 +21,9 @@ type ChatState = {
   serviceCalls: ServiceCallDto[]
   loading: boolean
   abortController: AbortController | null
-  loadServiceCalls: () => Promise<void>
+  loadServiceCalls: (knowledgeBaseId?: string) => Promise<void>
   sendMessage: (knowledgeBaseId: string, content: string) => Promise<void>
+  clearMessages: () => void
   stop: () => void
   createServiceCall: (
     name: string,
@@ -44,9 +45,13 @@ export const useChatStore = create<ChatState>((set, get) => ({
   serviceCalls: [],
   loading: false,
   abortController: null as AbortController | null,
-  loadServiceCalls: async () => {
-    const serviceCalls = await api.serviceCall.list()
+  loadServiceCalls: async (knowledgeBaseId) => {
+    const serviceCalls = await api.serviceCall.list(knowledgeBaseId)
     set({ serviceCalls })
+  },
+  clearMessages: () => {
+    get().abortController?.abort()
+    set({ messages: [], loading: false, abortController: null })
   },
   sendMessage: async (knowledgeBaseId, content) => {
     get().abortController?.abort()

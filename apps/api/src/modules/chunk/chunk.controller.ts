@@ -31,8 +31,9 @@ export class ChunkController {
   @Get()
   findAll(
     @Query('documentId') documentId?: string,
+    @Query('knowledgeBaseId') knowledgeBaseId?: string,
   ): Promise<ChunkDto[]> {
-    return this.service.findAll(documentId);
+    return this.service.findAll(documentId, knowledgeBaseId);
   }
 
   @Post()
