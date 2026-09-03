@@ -40,13 +40,17 @@ pnpm build              # 构建（根目录或 apps/web）
 - 主题：`src/index.css`（Tailwind v4 入口；主色 #5a55ff、页面背景 #f6fafd）
 - 路由：`src/router/index.tsx`
 
-## 当前状态（2026-08-31）
+## 当前状态（~~2026-08-31~~ 2026-09-03）
 
-- 前端计划 6 步已全部完成，`pnpm build` 通过
+- ~~前端计划 6 步已全部完成，`pnpm build` 通过~~ MVP（阶段一 ~ 四）全部完成，端到端测试通过，`pnpm build` 通过
 - 前端已接入后端真实 API（~~全部使用 mock 数据，尚未对接后端真实 API~~）
+- 后端：NestJS + TypeORM + pgvector；模块：KnowledgeBase / Document / Chunk / Search / Chat（SSE）/ ServiceCall / Embeddings；共享类型包 `@my-rag-agent/shared`
+- 支持文档格式：CSV / XLSX / XLS / TXT / MD（结构化按行切分，非结构化用 RecursiveCharacterTextSplitter）
+- 前端能力：问答 SSE 流式并可停止；手动新增/编辑切片自动生成向量；manualChunks 分包消除 chunk 警告；切片详情带 `?documentId=` 定位
+- 部署：`docker compose up -d` 一键启动 postgres + api + web（nginx 反代 `/api`、支持 SSE）
 - 布局：无顶部栏；侧边栏为"当前知识库"下拉 + 4 个子导航（缩进、小一号字号），可折叠
-- 知识库页已实现（卡片网格 + 创建/删除）；切片卡片支持来源文件、查看原文/编辑/删除；知识检索页含标题
-- 待办：本地预览、代码分割（消除 500 kB chunk 警告）、后端联调
+- 页面功能：知识库/文档/切片/检索/问答均已联调真实 API
+- 待办：~~本地预览、代码分割（消除 500 kB chunk 警告）、后端联调~~ 工程清理（`.vscode/`、根目录测试 xlsx、未提交改动）；后续迭代见 [项目开发计划.md](./项目开发计划.md)「九、后续开发计划」
 
 ## 注意事项
 
