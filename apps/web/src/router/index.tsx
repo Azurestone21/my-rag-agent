@@ -5,6 +5,7 @@ import DocumentManagePage from '@/pages/DocumentManage'
 import ChunkManagePage from '@/pages/ChunkManage'
 import KnowledgeSearchPage from '@/pages/KnowledgeSearch'
 import KnowledgeQAPage from '@/pages/KnowledgeQA'
+import UploadWizardPage from '@/pages/UploadWizard'
 
 export const router = createBrowserRouter([
   {
@@ -14,6 +15,7 @@ export const router = createBrowserRouter([
       { index: true, element: <Navigate to="/knowledge-base" replace /> },
       { path: 'knowledge-base', element: <KnowledgeBasePage /> },
       { path: 'documents', element: <DocumentManagePage /> },
+      { path: 'upload', element: <UploadWizardPage /> },
       { path: 'chunks', element: <ChunkManagePage /> },
       { path: 'search', element: <KnowledgeSearchPage /> },
       { path: 'qa', element: <KnowledgeQAPage /> },

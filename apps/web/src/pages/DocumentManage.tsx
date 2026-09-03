@@ -1,17 +1,10 @@
-import { useEffect, useRef, useState, type ChangeEvent } from 'react'
+import { useEffect } from 'react'
 import { FileText, Search, Trash2, Upload } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import type { DocumentStatus } from '@my-rag-agent/shared'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import {
   Table,
@@ -21,7 +14,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { cn } from '@/lib/utils'
 import { formatDateTime } from '@/lib/format'
 import { api } from '@/service'
 import { useDocumentStore } from '@/store/document'
@@ -49,88 +41,8 @@ const statusMap: Record<
   },
 }
 
-function UploadDocumentDialog({ knowledgeBaseId }: { knowledgeBaseId: string }) {
-  const [open, setOpen] = useState(false)
-  const [file, setFile] = useState<File | null>(null)
-  const inputRef = useRef<HTMLInputElement>(null)
-  const upload = useDocumentStore((state) => state.upload)
-
-  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
-    setFile(event.target.files?.[0] ?? null)
-  }
-
-  const handleUpload = async () => {
-    if (!file) {
-      toast.error('请先选择文件')
-      return
-    }
-    if (!knowledgeBaseId) {
-      toast.error('请先选择知识库')
-      return
-    }
-    try {
-      const doc = await upload(knowledgeBaseId, file)
-      toast.success(`文档「${doc.name}」上传成功`)
-      setFile(null)
-      setOpen(false)
-      if (inputRef.current) inputRef.current.value = ''
-      setTimeout(() => {
-        void useDocumentStore
-          .getState()
-          .load(knowledgeBaseId)
-          .catch(() => undefined)
-      }, 3000)
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : '上传失败')
-    }
-  }
-
-  return (
-    <>
-      <Button onClick={() => setOpen(true)}>
-        <Upload />
-        上传文档
-      </Button>
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>上传文档</DialogTitle>
-          </DialogHeader>
-          <label
-            className={cn(
-              'flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-input bg-muted/30 px-4 py-8 text-center transition-colors hover:border-primary-300 hover:bg-primary-50/40',
-            )}
-          >
-            <FileText className="size-8 text-text-muted" />
-            <span className="text-sm font-medium text-text-main">
-              {file ? file.name : '点击选择文件'}
-            </span>
-            <span className="text-xs text-text-muted">
-              支持 CSV、XLSX、XLS、TXT、MD 格式
-            </span>
-            <input
-              ref={inputRef}
-              type="file"
-              accept=".csv,.xlsx,.xls,.txt,.md"
-              className="hidden"
-              onChange={handleFileChange}
-            />
-          </label>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>
-              取消
-            </Button>
-            <Button onClick={handleUpload} disabled={!file}>
-              确认上传
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </>
-  )
-}
-
 export default function DocumentManagePage() {
+  const navigate = useNavigate()
   const documents = useDocumentStore((state) => state.documents)
   const searchQuery = useDocumentStore((state) => state.searchQuery)
   const setSearchQuery = useDocumentStore((state) => state.setSearchQuery)
@@ -186,7 +98,10 @@ export default function DocumentManagePage() {
               onChange={(event) => setSearchQuery(event.target.value)}
             />
           </div>
-          <UploadDocumentDialog knowledgeBaseId={selectedKbId} />
+          <Button onClick={() => navigate('/upload')}>
+            <Upload />
+            上传文档
+          </Button>
         </div>
       </div>
 

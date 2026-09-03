@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { DocumentDto } from '@my-rag-agent/shared'
+import type { DocumentDto, ChunkProcessConfig } from '@my-rag-agent/shared'
 import { api } from '@/service'
 
 type DocumentState = {
@@ -8,7 +8,7 @@ type DocumentState = {
   loading: boolean
   load: (knowledgeBaseId?: string) => Promise<void>
   setSearchQuery: (query: string) => void
-  upload: (knowledgeBaseId: string, file: File) => Promise<DocumentDto>
+  upload: (knowledgeBaseId: string, file: File, config?: ChunkProcessConfig) => Promise<DocumentDto>
   remove: (id: string) => Promise<void>
 }
 
@@ -27,8 +27,8 @@ export const useDocumentStore = create<DocumentState>((set) => ({
     }
   },
   setSearchQuery: (query) => set({ searchQuery: query }),
-  upload: async (knowledgeBaseId, file) => {
-    const doc = await api.document.upload(knowledgeBaseId, file)
+  upload: async (knowledgeBaseId, file, config) => {
+    const doc = await api.document.upload(knowledgeBaseId, file, config)
     set((state) => ({ documents: [doc, ...state.documents] }))
     return doc
   },
