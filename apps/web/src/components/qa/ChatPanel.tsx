@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react'
 import { Bot, Send, Square } from 'lucide-react'
 import { toast } from 'sonner'
-import { Button } from '@/components/ui/button'
 import {
   InputGroup,
   InputGroupAddon,
