@@ -39,6 +39,9 @@ export class Document {
   @Column({ type: 'varchar', length: 100, default: 'my_rag_agent_init_version', comment: '处理策略' })
   strategy: string;
 
+  @Column({ type: 'jsonb', nullable: true, comment: '文件处理配置（分段/表头/数据行等）' })
+  config: Record<string, unknown> | null;
+
   @CreateDateColumn({ type: 'timestamptz', comment: '创建时间' })
   createdAt: Date;
 

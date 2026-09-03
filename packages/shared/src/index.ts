@@ -4,6 +4,7 @@ export type {
 export type {
   DocumentDto,
   DocumentStatus,
+  ChunkProcessConfig,
 } from './document.js'
 export type {
   ChunkDto,

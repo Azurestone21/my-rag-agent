@@ -4,7 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { promises as fs } from 'node:fs';
 import { extname, join } from 'node:path';
 import { Repository } from 'typeorm';
-import type { DocumentDto, DocumentStatus } from '@my-rag-agent/shared';
+import type { DocumentDto, DocumentStatus, ChunkProcessConfig } from '@my-rag-agent/shared';
 import { Document } from '../../entities/document.entity.js';
 import { ChunkService } from '../chunk/chunk.service.js';
 
@@ -32,6 +32,7 @@ export class DocumentService {
   async create(
     knowledgeBaseId: string,
     file: Express.Multer.File,
+    config?: ChunkProcessConfig,
   ): Promise<DocumentDto> {
     const entity = this.repository.create({
       knowledgeBaseId,
@@ -39,8 +40,9 @@ export class DocumentService {
       filePath: file.path,
       status: 'pending' as DocumentStatus,
       importMethod: 'local_upload',
-      strategy: 'my_rag_agent_init_version',
+      strategy: config ? `custom:${config.fileType}` : 'my_rag_agent_init_version',
       chunkCount: 0,
+      config: (config ?? null) as Record<string, unknown> | null,
     });
     const saved = await this.repository.save(entity);
     void this.chunkService.process(saved.id).catch((error: Error) => {

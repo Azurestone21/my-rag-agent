@@ -14,7 +14,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { mkdirSync } from 'node:fs';
 import { extname, join } from 'node:path';
-import type { DocumentDto } from '@my-rag-agent/shared';
+import type { DocumentDto, ChunkProcessConfig } from '@my-rag-agent/shared';
 import { DocumentService } from './document.service.js';
 
 @Controller('documents')
@@ -53,6 +53,7 @@ export class DocumentController {
   upload(
     @UploadedFile() file: Express.Multer.File,
     @Query('knowledgeBaseId') knowledgeBaseId: string,
+    @Query('config') configStr?: string,
   ): Promise<DocumentDto> {
     if (!file) {
       throw new BadRequestException('请上传文件');
@@ -63,7 +64,15 @@ export class DocumentController {
     if (!knowledgeBaseId) {
       throw new BadRequestException('缺少 knowledgeBaseId');
     }
-    return this.service.create(knowledgeBaseId, file);
+    let config: ChunkProcessConfig | undefined;
+    if (configStr) {
+      try {
+        config = JSON.parse(configStr) as ChunkProcessConfig;
+      } catch {
+        throw new BadRequestException('config 参数不是合法 JSON');
+      }
+    }
+    return this.service.create(knowledgeBaseId, file, config);
   }
 
   @Get()
