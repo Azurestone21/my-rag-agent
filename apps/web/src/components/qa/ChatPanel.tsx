@@ -1,14 +1,22 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react'
-import { Bot, Send } from 'lucide-react'
+import { Bot, Send, Square } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
-import { Textarea } from '@/components/ui/textarea'
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupText,
+  InputGroupTextarea,
+} from '@/components/ui/input-group'
 import { useChatStore } from '@/store/chat'
 import { useKnowledgeBaseStore } from '@/store/knowledgeBase'
 
 export default function ChatPanel() {
   const messages = useChatStore((state) => state.messages)
+  const loading = useChatStore((state) => state.loading)
   const sendMessage = useChatStore((state) => state.sendMessage)
+  const stop = useChatStore((state) => state.stop)
   const selectedKbId = useKnowledgeBaseStore((state) => state.selectedKbId)
   const [input, setInput] = useState('')
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -77,7 +85,15 @@ export default function ChatPanel() {
               </div>
               <div className="max-w-[85%] space-y-2">
                 <div className="rounded-lg rounded-tl-sm border border-border-subtle bg-page px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-line text-text-main">
-                  {message.content}
+                  {message.content || (loading ? (
+                    <span className="inline-flex gap-1">
+                      <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-text-muted [animation-delay:-0.3s]"></span>
+                      <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-text-muted [animation-delay:-0.15s]"></span>
+                      <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-text-muted"></span>
+                    </span>
+                  ) : (
+                    <span className="text-text-muted">已停止</span>
+                  ))}
                 </div>
                 {message.sources && message.sources.length > 0 && (
                   <div className="text-xs text-text-muted">
@@ -91,22 +107,29 @@ export default function ChatPanel() {
       </div>
 
       <div className="border-t border-border-subtle p-3">
-        <Textarea
-          value={input}
-          maxLength={80}
-          rows={3}
-          className="resize-none field-sizing-fixed"
-          placeholder="输入问题，例如：小王销售业绩是多少？"
-          onChange={(event) => setInput(event.target.value)}
-          onKeyDown={handleKeyDown}
-        />
-        <div className="mt-2 flex items-center justify-between">
-          <span className="text-xs text-text-muted">{input.length}/80</span>
-          <Button size="sm" onClick={handleSend} disabled={!input.trim()}>
-            <Send />
-            发送
-          </Button>
-        </div>
+        <InputGroup>
+          <InputGroupTextarea
+            value={input}
+            maxLength={80}
+            rows={3}
+            placeholder="输入问题..."
+            onChange={(event) => setInput(event.target.value)}
+            onKeyDown={handleKeyDown}
+          />
+          <InputGroupAddon align="block-end" className="justify-between">
+            <InputGroupText>{input.length}/80</InputGroupText>
+            <InputGroupButton
+              variant={loading ? 'destructive' : 'default'}
+              size="icon-sm"
+              onClick={loading ? () => stop() : handleSend}
+              disabled={!loading && !input.trim()}
+              title={loading ? '停止生成' : '发送'}
+              aria-label={loading ? '停止生成' : '发送'}
+            >
+              {loading ? <Square /> : <Send />}
+            </InputGroupButton>
+          </InputGroupAddon>
+        </InputGroup>
       </div>
     </div>
   )

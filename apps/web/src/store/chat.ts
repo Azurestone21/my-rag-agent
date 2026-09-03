@@ -5,6 +5,7 @@ import type {
   ServiceCallDto,
 } from '@my-rag-agent/shared'
 import { api } from '@/service'
+import { chatApi } from '@/service/chat'
 
 const defaultParams: SearchParamsDto = {
   resultCount: 10,
@@ -19,8 +20,10 @@ type ChatState = {
   messages: ChatMessageDto[]
   serviceCalls: ServiceCallDto[]
   loading: boolean
+  abortController: AbortController | null
   loadServiceCalls: () => Promise<void>
   sendMessage: (knowledgeBaseId: string, content: string) => Promise<void>
+  stop: () => void
   createServiceCall: (
     name: string,
     knowledgeBaseId: string,
@@ -40,43 +43,92 @@ export const useChatStore = create<ChatState>((set, get) => ({
   messages: [],
   serviceCalls: [],
   loading: false,
+  abortController: null as AbortController | null,
   loadServiceCalls: async () => {
     const serviceCalls = await api.serviceCall.list()
     set({ serviceCalls })
   },
   sendMessage: async (knowledgeBaseId, content) => {
+    get().abortController?.abort()
+    const controller = new AbortController()
+    set({ abortController: controller })
+
     const userMessage: ChatMessageDto = {
       id: `msg-${Date.now()}`,
       role: 'user',
       content,
       createdAt: now(),
     }
-    set((state) => ({ messages: [...state.messages, userMessage] }))
-    set({ loading: true })
+    const assistantId = `msg-${Date.now() + 1}`
+    const emptyAssistant: ChatMessageDto = {
+      id: assistantId,
+      role: 'assistant',
+      content: '',
+      createdAt: now(),
+    }
+    set((state) => ({
+      messages: [...state.messages, userMessage, emptyAssistant],
+      loading: true,
+    }))
+
     try {
       const { params } = get()
-      const answer = await api.chat.run({
-        knowledgeBaseId,
-        query: content,
-        topK: params.resultCount,
-        minSimilarity: params.minSimilarity,
-        temperature: 0.3,
-      })
-      const assistantMessage: ChatMessageDto = {
-        id: `msg-${Date.now() + 1}`,
-        role: 'assistant',
-        content: answer.answer,
-        sources: answer.sources,
-        createdAt: now(),
-      }
-      set((state) => ({
-        messages: [...state.messages, assistantMessage],
-        loading: false,
-      }))
+      await chatApi.stream(
+        {
+          knowledgeBaseId,
+          query: content,
+          topK: params.resultCount,
+          minSimilarity: params.minSimilarity,
+          temperature: 0.3,
+        },
+        {
+          onSources: (sources) => {
+            set((state) => ({
+              messages: state.messages.map((m) =>
+                m.id === assistantId ? { ...m, sources } : m,
+              ),
+            }))
+          },
+          onContent: (delta) => {
+            set((state) => ({
+              messages: state.messages.map((m) =>
+                m.id === assistantId ? { ...m, content: m.content + delta } : m,
+              ),
+            }))
+          },
+          onDone: () => {
+            set({ loading: false, abortController: null })
+          },
+          onError: () => {
+            set((state) => ({
+              messages: state.messages.map((m) =>
+                m.id === assistantId
+                  ? { ...m, content: m.content || '生成失败' }
+                  : m,
+              ),
+              loading: false,
+              abortController: null,
+            }))
+          },
+        },
+        controller.signal,
+      )
     } catch (error) {
-      set({ loading: false })
-      throw error
+      const name =
+        error && typeof error === 'object' && 'name' in error
+          ? (error as { name: string }).name
+          : ''
+      if (name === 'AbortError') {
+        set({ loading: false, abortController: null })
+      } else {
+        set({ loading: false, abortController: null })
+        throw error
+      }
     }
+  },
+  stop: () => {
+    get().abortController?.abort()
+    set({ abortController: null })
   },
   createServiceCall: async (name, knowledgeBaseId, topK) => {
     const service = await api.serviceCall.create(name, knowledgeBaseId, topK)

@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ChatOpenAI } from '@langchain/openai';
 import type { Response } from 'express';
-import type { ChatAnswerDto, SearchResultDto } from '@my-rag-agent/shared';
+import type { SearchResultDto } from '@my-rag-agent/shared';
 import { SearchService } from '../search/search.service.js';
 import { ChatDto } from './dto/chat.dto.js';
 
@@ -32,19 +32,6 @@ export class ChatService {
         ),
       },
     });
-  }
-
-  async answer(dto: ChatDto): Promise<ChatAnswerDto> {
-    const sources = await this.search.search(dto);
-    const prompt = this.buildPrompt(dto.query, sources);
-    const response = await this.model.invoke([
-      { role: 'system', content: SYSTEM_PROMPT },
-      { role: 'user', content: prompt },
-    ]);
-    return {
-      answer: String(response.content),
-      sources,
-    };
   }
 
   async stream(dto: ChatDto, res: Response): Promise<void> {

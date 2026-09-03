@@ -11,12 +11,12 @@ export default function SourcesPanel() {
   const sources = lastAssistant?.sources ?? []
 
   return (
-    <div className="flex h-full min-h-0 flex-col rounded-lg border border-border-subtle bg-panel p-4">
-      <div className="flex shrink-0 items-center gap-2">
+    <div className="flex h-full min-h-0 flex-col rounded-lg border border-border-subtle bg-panel py-4">
+      <div className="flex shrink-0 items-center gap-2 px-4">
         <Library className="size-4 text-primary-600" />
         <h2 className="text-sm font-semibold text-text-main">引用来源</h2>
       </div>
-      <p className="mt-1 shrink-0 text-xs leading-relaxed text-text-muted">
+      <p className="mt-1 shrink-0 text-xs leading-relaxed text-text-muted px-4">
         回答使用的命中切片固定展示在右侧
       </p>
 
@@ -28,8 +28,8 @@ export default function SourcesPanel() {
           </p>
         </div>
       ) : (
-        <ScrollArea className="mt-3 flex-1 min-h-0">
-          <div className="space-y-3 pr-1">
+        <ScrollArea className="mt-3 flex-1 min-h-0  px-4">
+          <div className="space-y-3">
             {sources.map((source, index) => (
               <div
                 key={`${source.chunkId}-${index}`}
@@ -46,7 +46,7 @@ export default function SourcesPanel() {
                     {source.similarity.toFixed(4)}
                   </Badge>
                 </div>
-                <p className="mt-1.5 line-clamp-4 text-xs leading-relaxed text-text-secondary">
+                <p className="mt-1.5 break-all line-clamp-4 text-xs leading-relaxed text-text-secondary">
                   {source.content}
                 </p>
               </div>
