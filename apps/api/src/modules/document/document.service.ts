@@ -8,7 +8,7 @@ import type { DocumentDto, DocumentStatus } from '@my-rag-agent/shared';
 import { Document } from '../../entities/document.entity.js';
 import { ChunkService } from '../chunk/chunk.service.js';
 
-const ALLOWED_EXTENSIONS = ['.csv', '.xlsx', '.xls'];
+const ALLOWED_EXTENSIONS = ['.csv', '.xlsx', '.xls', '.txt', '.md'];
 
 @Injectable()
 export class DocumentService {

@@ -34,11 +34,26 @@ export class ChunkService {
 
     try {
       const text = await this.extractText(document.filePath);
-      // Excel/CSV 已经按行输出 JSON，每行就是独立的数据记录，直接按行切分
-      const parts = text
-        .split('\n')
-        .map((line) => line.trim())
-        .filter((line) => line.length > 0);
+      // 根据文件类型选择切片策略
+      const ext = extname(document.filePath).toLowerCase();
+      const isStructured = ext === '.xlsx' || ext === '.xls' || ext === '.csv';
+
+      let parts: string[];
+      if (isStructured) {
+        // 结构化数据（Excel/CSV）：每行一条独立记录，直接按行切
+        parts = text
+          .split('\n')
+          .map((line) => line.trim())
+          .filter((line) => line.length > 0);
+      } else {
+        // 非结构化文本（txt/md）：固定长度 + 重叠切片，保证语义完整
+        const splitter = new RecursiveCharacterTextSplitter({
+          chunkSize: 500,
+          chunkOverlap: 50,
+          separators: ['\n\n', '\n', '。', '！', '？', '，', ''],
+        });
+        parts = await splitter.splitText(text);
+      }
 
       await this.chunks.delete({ documentId });
 
@@ -135,9 +150,10 @@ export class ChunkService {
 
   private async extractText(filePath: string): Promise<string> {
     const ext = extname(filePath).toLowerCase();
-    if (ext === '.csv') {
+    if (ext === '.txt' || ext === '.md' || ext === '.csv') {
       return fs.readFile(filePath, 'utf-8');
     }
+    // 纯文本类文件：直接读取原始内容，后续用 TextSplitter 切片
     if (ext === '.xlsx' || ext === '.xls') {
       const workbook = XLSX.readFile(filePath);
       const lines: string[] = [];

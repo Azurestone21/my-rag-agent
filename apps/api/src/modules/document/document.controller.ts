@@ -36,13 +36,13 @@ export class DocumentController {
         },
       }),
       fileFilter: (_req, file, callback) => {
-        const allowed = ['.csv', '.xlsx', '.xls'];
+        const allowed = ['.csv', '.xlsx', '.xls', '.txt', '.md'];
         const ext = extname(file.originalname).toLowerCase();
         if (allowed.includes(ext)) {
           callback(null, true);
         } else {
           callback(
-            new BadRequestException('仅支持 .csv / .xlsx / .xls 文件'),
+            new BadRequestException('仅支持 .csv / .xlsx / .xls / .txt / .md 文件'),
             false,
           );
         }
@@ -58,7 +58,7 @@ export class DocumentController {
       throw new BadRequestException('请上传文件');
     }
     if (!this.service.isExtensionAllowed(file.originalname)) {
-      throw new BadRequestException('仅支持 .csv / .xlsx / .xls 文件');
+      throw new BadRequestException('仅支持 .csv / .xlsx / .xls / .txt / .md 文件');
     }
     if (!knowledgeBaseId) {
       throw new BadRequestException('缺少 knowledgeBaseId');

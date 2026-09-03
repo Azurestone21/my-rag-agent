@@ -96,10 +96,6 @@ function UploadDocumentDialog({ knowledgeBaseId }: { knowledgeBaseId: string }) 
         <DialogContent>
           <DialogHeader>
             <DialogTitle>上传文档</DialogTitle>
-            <DialogDescription>
-              CSV/XLSX 转 CSV 后进入 Loader 与 Splitter，支持 .csv / .xlsx / .xls
-              文件。
-            </DialogDescription>
           </DialogHeader>
           <label
             className={cn(
@@ -111,12 +107,12 @@ function UploadDocumentDialog({ knowledgeBaseId }: { knowledgeBaseId: string }) 
               {file ? file.name : '点击选择文件'}
             </span>
             <span className="text-xs text-text-muted">
-              支持 CSV、XLSX、XLS 格式
+              支持 CSV、XLSX、XLS、TXT、MD 格式
             </span>
             <input
               ref={inputRef}
               type="file"
-              accept=".csv,.xlsx,.xls"
+              accept=".csv,.xlsx,.xls,.txt,.md"
               className="hidden"
               onChange={handleFileChange}
             />
