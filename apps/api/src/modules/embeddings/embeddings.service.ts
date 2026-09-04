@@ -8,11 +8,11 @@ export class EmbeddingsService {
 
   constructor(config: ConfigService) {
     this.embeddings = new OpenAIEmbeddings({
-      model: config.get<string>('EMBEDDING_MODEL', 'qwen3.7-text-embedding'),
-      apiKey: config.get<string>('BAILIAN_API_KEY'),
+      model: config.get<string>('LLM_EMBEDDING_MODEL', 'qwen3.7-text-embedding'),
+      apiKey: config.get<string>('LLM_API_KEY'),
       configuration: {
         baseURL: config.get<string>(
-          'DASHSCOPE_BASE_URL',
+          'LLM_BASE_URL',
           'https://dashscope.aliyuncs.com/compatible-mode/v1',
         ),
       },

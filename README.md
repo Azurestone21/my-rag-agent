@@ -31,7 +31,7 @@
 cp .env.example .env
 ```
 
-至少需要修改 `BAILIAN_API_KEY`；如默认端口被占用，可调整 `API_PORT` / `WEB_PORT`。
+至少需要修改 `LLM_API_KEY`；如默认端口被占用，可调整 `API_PORT` / `WEB_PORT`。
 
 2. 构建并启动（DB + API + Web）：
 
@@ -59,7 +59,7 @@ pnpm dev --filter=api   # 只启动后端（3000）
 见 [.env.example](./.env.example)：
 
 - PostgreSQL：`POSTGRES_HOST/PORT/USER/PASSWORD/DB`、`DATABASE_URL`
-- 百炼：`BAILIAN_API_KEY`、`DASHSCOPE_BASE_URL`、`EMBEDDING_MODEL`、`LLM_MODEL`
+- 百炼：`LLM_API_KEY`、`LLM_BASE_URL`、`LLM_EMBEDDING_MODEL`、`LLM_CHAT_MODEL`
 - 服务：`API_PORT`、`WEB_PORT`、`API_BASE_URL`、`CORS_ORIGIN`
 
 ## 项目结构

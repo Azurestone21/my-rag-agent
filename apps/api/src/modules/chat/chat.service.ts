@@ -20,14 +20,14 @@ export class ChatService {
     config: ConfigService,
     private readonly search: SearchService,
   ) {
-    this.modelName = config.get<string>('LLM_MODEL', 'qwen3.7-plus');
+    this.modelName = config.get<string>('LLM_CHAT_MODEL', 'qwen3.7-plus');
     this.model = new ChatOpenAI({
       model: this.modelName,
-      apiKey: config.get<string>('BAILIAN_API_KEY'),
+      apiKey: config.get<string>('LLM_API_KEY'),
       temperature: 0.3,
       configuration: {
         baseURL: config.get<string>(
-          'DASHSCOPE_BASE_URL',
+          'LLM_BASE_URL',
           'https://dashscope.aliyuncs.com/compatible-mode/v1',
         ),
       },
