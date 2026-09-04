@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/select'
 import { Slider } from '@/components/ui/slider'
 import type { SearchParamsDto } from '@my-rag-agent/shared'
+import { RERANK_MODEL_OPTIONS } from '@/constants/rerank.constants'
 
 type SearchParamsPanelProps = {
   title?: string
@@ -68,17 +69,18 @@ export default function SearchParamsPanel({
         <div className="space-y-2">
           <Label>重排模型</Label>
           <Select
-            value={params.rerankModel}
+            value={params.rerankModel || '0'}
             onValueChange={(value) => onChange({ rerankModel: value })}
           >
             <SelectTrigger className="w-full">
               <SelectValue placeholder="选择重排模型" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="暂不启用">暂不启用</SelectItem>
-              <SelectItem value="bge-reranker-v2-m3">
-                bge-reranker-v2-m3
-              </SelectItem>
+              {RERANK_MODEL_OPTIONS.map((option) => (
+                <SelectItem key={option.value} value={option.value} disabled={option.disabled}>
+                  {option.label}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>

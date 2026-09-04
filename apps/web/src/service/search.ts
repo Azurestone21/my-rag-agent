@@ -1,4 +1,4 @@
-import type { SearchResultDto } from "@my-rag-agent/shared";
+﻿import type { SearchResultDto } from "@my-rag-agent/shared";
 import { request, toQuery } from "./request";
 
 export const searchApi = {
@@ -14,5 +14,7 @@ export const searchApi = {
     query: string;
     topK: number;
     minSimilarity: number;
+    denseWeight: number;
+    rerankModel: string;
   }) => request<SearchResultDto[]>(`/search${toQuery(params)}`),
 };

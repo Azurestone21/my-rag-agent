@@ -1,4 +1,4 @@
-import { create } from 'zustand'
+﻿import { create } from 'zustand'
 import type {
   SearchParamsDto,
   SearchResultDto,
@@ -7,8 +7,8 @@ import { api } from '@/service'
 
 const defaultParams: SearchParamsDto = {
   resultCount: 10,
-  minSimilarity: 0,
-  rerankModel: '暂不启用',
+  minSimilarity: 0.5,
+  rerankModel: '0',
   denseWeight: 0.5,
 }
 
@@ -44,6 +44,8 @@ export const useSearchStore = create<SearchState>((set, get) => ({
         query: trimmed,
         topK: params.resultCount,
         minSimilarity: params.minSimilarity,
+        denseWeight: params.denseWeight,
+        rerankModel: params.rerankModel === '0' ? '' : params.rerankModel,
       })
       set((state) => ({
         results,

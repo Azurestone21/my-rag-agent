@@ -23,4 +23,14 @@ export class SearchDto {
   @Min(0)
   @Max(1)
   minSimilarity: number = 0;
+
+  @IsOptional()
+  @Type(() => Number)
+  @Min(0)
+  @Max(1)
+  denseWeight: number = 0.5;
+
+  @IsOptional()
+  @IsString()
+  rerankModel: string = '';
 }

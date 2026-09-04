@@ -9,8 +9,8 @@ import { chatApi } from '@/service/chat'
 
 const defaultParams: SearchParamsDto = {
   resultCount: 10,
-  minSimilarity: 0,
-  rerankModel: '暂不启用',
+  minSimilarity: 0.5,
+  rerankModel: '0',
   denseWeight: 0.5,
 }
 
