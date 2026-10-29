@@ -41,11 +41,13 @@ docker compose up -d --build
 
 访问：
 
-- Web：<http://localhost:5173>（默认 `WEB_PORT`）
-- API：<http://localhost:3000/api>（默认 `API_PORT`，nginx 已代理 `/api`）
+- Web：[http://localhost:5173](http://localhost:5173)（默认 `WEB_PORT`）
+- API：[http://localhost:3000/api](http://localhost:3000/api)（默认 `API_PORT`，nginx 已代理 `/api`）
 - 数据库：`localhost:5432`（pgAdmin 等工具，账号密码见 `.env`）
 
 ### 本地开发
+
+Node.js > v22.13
 
 ```bash
 pnpm install        # 安装全部依赖（需先启动 PostgreSQL，可单独启动 docker-compose 的 postgres 服务）
@@ -82,13 +84,13 @@ my-rag-agent/
 
 全局前缀 `/api`，除服务调用接口外均无鉴权（开发阶段）：
 
-| 模块     | 接口                                                                                      |
-| -------- | ----------------------------------------------------------------------------------------- |
+| 模块     | 接口                                                                                          |
+| -------- | --------------------------------------------------------------------------------------------- |
 | 知识库   | `GET/POST /knowledge-bases`、`GET/PATCH/DELETE /knowledge-bases/:id`                      |
-| 文档     | `POST /documents/upload`、`GET /documents`、`GET/DELETE /documents/:id`                   |
-| 切片     | `POST /chunks/process/:documentId`、`GET/POST /chunks`、`GET/PATCH/DELETE /chunks/:id`    |
-| 检索     | `GET /search?knowledgeBaseId=&query=&topK=&minSimilarity=`                                |
-| 问答     | `POST /chat/stream`（SSE）                                                                |
+| 文档     | `POST /documents/upload`、`GET /documents`、`GET/DELETE /documents/:id`                 |
+| 切片     | `POST /chunks/process/:documentId`、`GET/POST /chunks`、`GET/PATCH/DELETE /chunks/:id`  |
+| 检索     | `GET /search?knowledgeBaseId=&query=&topK=&minSimilarity=`                                  |
+| 问答     | `POST /chat/stream`（SSE）                                                                  |
 | 服务调用 | `GET/POST/DELETE /service-calls`、`POST /service-calls/:id/chat/stream`（Bearer API Key） |
 
 ## 文档
