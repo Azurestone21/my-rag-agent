@@ -18,5 +18,9 @@ export default defineConfig([
     languageOptions: {
       globals: globals.browser,
     },
+    rules: {
+      semi: ['error', 'never'], // 禁止使用分号
+      quotes: ['error', 'single'], // 引号必须使用单引号
+    },
   },
 ])

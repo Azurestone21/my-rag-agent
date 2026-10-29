@@ -1,5 +1,5 @@
-﻿import type { SearchResultDto } from "@my-rag-agent/shared";
-import { request, toQuery } from "./request";
+﻿import type { SearchResultDto } from '@my-rag-agent/shared'
+import { request, toQuery } from './request'
 
 export const searchApi = {
   /**
@@ -10,11 +10,11 @@ export const searchApi = {
    * @param params.minSimilarity 最低相似度阈值
    */
   run: (params: {
-    knowledgeBaseId: string;
-    query: string;
-    topK: number;
-    minSimilarity: number;
-    denseWeight: number;
-    rerankModel: string;
+    knowledgeBaseId: string
+    query: string
+    topK: number
+    minSimilarity: number
+    denseWeight: number
+    rerankModel: string
   }) => request<SearchResultDto[]>(`/search${toQuery(params)}`),
-};
+}

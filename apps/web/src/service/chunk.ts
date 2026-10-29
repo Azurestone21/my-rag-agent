@@ -1,5 +1,5 @@
-import type { ChunkDto, ChunkProcessResultDto } from "@my-rag-agent/shared";
-import { request, toQuery } from "./request";
+import type { ChunkDto, ChunkProcessResultDto } from '@my-rag-agent/shared'
+import { request, toQuery } from './request'
 
 export const chunkApi = {
   /**
@@ -8,10 +8,10 @@ export const chunkApi = {
    * @param knowledgeBaseId 知识库 ID（可选，优先过滤）
    */
   list: (documentId?: string, knowledgeBaseId?: string) => {
-    const query: Record<string, string> = {};
-    if (documentId) query.documentId = documentId;
-    if (knowledgeBaseId) query.knowledgeBaseId = knowledgeBaseId;
-    return request<ChunkDto[]>(`/chunks${toQuery(query)}`);
+    const query: Record<string, string> = {}
+    if (documentId) query.documentId = documentId
+    if (knowledgeBaseId) query.knowledgeBaseId = knowledgeBaseId
+    return request<ChunkDto[]>(`/chunks${toQuery(query)}`)
   },
   /**
    * 处理文档：读取文件 → 文本切片 → 生成向量，并更新文档状态
@@ -19,7 +19,7 @@ export const chunkApi = {
    */
   process: (documentId: string) =>
     request<ChunkProcessResultDto>(`/chunks/process/${documentId}`, {
-      method: "POST",
+      method: 'POST',
     }),
   /**
    * 手动新增切片
@@ -27,8 +27,8 @@ export const chunkApi = {
    * @param content 切片内容
    */
   create: (documentId: string, content: string) =>
-    request<ChunkDto>("/chunks", {
-      method: "POST",
+    request<ChunkDto>('/chunks', {
+      method: 'POST',
       body: JSON.stringify({ documentId, content }),
     }),
   /**
@@ -38,12 +38,12 @@ export const chunkApi = {
    */
   update: (id: string, content: string) =>
     request<ChunkDto>(`/chunks/${id}`, {
-      method: "PATCH",
+      method: 'PATCH',
       body: JSON.stringify({ content }),
     }),
   /**
    * 删除切片
    * @param id 切片 ID
    */
-  delete: (id: string) => request<void>(`/chunks/${id}`, { method: "DELETE" }),
-};
+  delete: (id: string) => request<void>(`/chunks/${id}`, { method: 'DELETE' }),
+}

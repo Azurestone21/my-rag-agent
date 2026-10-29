@@ -1,5 +1,5 @@
-import type { ServiceCallDto } from "@my-rag-agent/shared";
-import { request } from "./request";
+import type { ServiceCallDto } from '@my-rag-agent/shared'
+import { request } from './request'
 
 export const serviceCallApi = {
   /**
@@ -7,7 +7,9 @@ export const serviceCallApi = {
    * @param knowledgeBaseId 知识库 ID（可选，用于过滤）
    */
   list: (knowledgeBaseId?: string) =>
-    request<ServiceCallDto[]>(`/service-calls${knowledgeBaseId ? `?knowledgeBaseId=${knowledgeBaseId}` : ''}`),
+    request<ServiceCallDto[]>(
+      `/service-calls${knowledgeBaseId ? `?knowledgeBaseId=${knowledgeBaseId}` : ''}`,
+    ),
   /**
    * 生成问答 API（自动生成 API Key）
    * @param name 服务名称
@@ -16,8 +18,8 @@ export const serviceCallApi = {
    * @returns 服务调用
    */
   create: (name: string, knowledgeBaseId: string, topK: number) =>
-    request<ServiceCallDto>("/service-calls", {
-      method: "POST",
+    request<ServiceCallDto>('/service-calls', {
+      method: 'POST',
       body: JSON.stringify({ name, knowledgeBaseId, topK }),
     }),
   /**
@@ -25,5 +27,5 @@ export const serviceCallApi = {
    * @param id 服务调用 ID
    */
   delete: (id: string) =>
-    request<void>(`/service-calls/${id}`, { method: "DELETE" }),
-};
+    request<void>(`/service-calls/${id}`, { method: 'DELETE' }),
+}

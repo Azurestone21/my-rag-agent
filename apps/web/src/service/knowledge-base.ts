@@ -1,12 +1,12 @@
-import type { KnowledgeBaseDto } from "@my-rag-agent/shared";
-import { request } from "./request";
+import type { KnowledgeBaseDto } from '@my-rag-agent/shared'
+import { request } from './request'
 
 export const knowledgeBaseApi = {
   /**
    * 获取知识库列表（含文档数/切片数统计）
    * @returns 知识库列表
    */
-  list: () => request<KnowledgeBaseDto[]>("/knowledge-bases"),
+  list: () => request<KnowledgeBaseDto[]>('/knowledge-bases'),
   /**
    * 创建知识库
    * @param name 名称
@@ -14,8 +14,8 @@ export const knowledgeBaseApi = {
    * @returns 知识库
    */
   create: (name: string, description: string) =>
-    request<KnowledgeBaseDto>("/knowledge-bases", {
-      method: "POST",
+    request<KnowledgeBaseDto>('/knowledge-bases', {
+      method: 'POST',
       body: JSON.stringify({ name, description }),
     }),
   /**
@@ -26,7 +26,7 @@ export const knowledgeBaseApi = {
    */
   update: (id: string, name?: string, description?: string) =>
     request<KnowledgeBaseDto>(`/knowledge-bases/${id}`, {
-      method: "PATCH",
+      method: 'PATCH',
       body: JSON.stringify({ name, description }),
     }),
   /**
@@ -34,5 +34,5 @@ export const knowledgeBaseApi = {
    * @param id 知识库 ID
    */
   delete: (id: string) =>
-    request<void>(`/knowledge-bases/${id}`, { method: "DELETE" }),
-};
+    request<void>(`/knowledge-bases/${id}`, { method: 'DELETE' }),
+}

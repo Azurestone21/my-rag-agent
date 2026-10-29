@@ -7,4 +7,4 @@ export interface RerankOption {
 export const RERANK_MODEL_OPTIONS: RerankOption[] = [
   { value: "0", label: "暂不启用" },
   { value: "qwen3-rerank", label: "qwen3-rerank" },
-];
+]
