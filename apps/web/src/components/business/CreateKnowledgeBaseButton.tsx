@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Pencil, Plus } from 'lucide-react'
 import { toast } from 'sonner'
 import type { KnowledgeBaseDto } from '@my-rag-agent/shared'
@@ -34,13 +34,6 @@ export default function KnowledgeBaseDialog({ kb, trigger }: Props) {
   const updateKb = useKnowledgeBaseStore((state) => state.updateKb)
 
   const isEdit = Boolean(kb)
-
-  useEffect(() => {
-    if (open) {
-      setName(kb?.name ?? '')
-      setDescription(kb?.description ?? '')
-    }
-  }, [open, kb])
 
   const handleSubmit = async () => {
     if (!name.trim()) {

@@ -45,20 +45,13 @@ type ChunkDialogProps =
 
 function ChunkDialog(props: ChunkDialogProps) {
   const [open, setOpen] = useState(false)
-  const [content, setContent] = useState('')
+  const [content, setContent] = useState(props.chunk?.content ?? '')
   const [localDocId, setLocalDocId] = useState(props.documentId ?? '')
   const add = useChunkStore((state) => state.add)
   const update = useChunkStore((state) => state.update)
   const documents = useDocumentStore((state) => state.documents)
   const isEdit = Boolean(props.chunk)
   const needsDocSelect = !isEdit && !props.documentId
-
-  useEffect(() => {
-    if (open) {
-      setContent(props.chunk?.content ?? '')
-      setLocalDocId(props.documentId ?? '')
-    }
-  }, [open, props.chunk, props.documentId])
 
   const handleSubmit = async () => {
     if (!isEdit) {
