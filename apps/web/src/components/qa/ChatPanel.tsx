@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import { Bot, Send, Square } from 'lucide-react'
 import { toast } from 'sonner'
 import {
@@ -83,8 +85,12 @@ export default function ChatPanel() {
                 <Bot className="size-4" />
               </div>
               <div className="max-w-[85%] space-y-2">
-                <div className="rounded-lg rounded-tl-sm border border-border-subtle bg-page px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-line text-text-main">
-                  {message.content || (loading ? (
+                <div className="rounded-lg rounded-tl-sm border border-border-subtle bg-page px-3.5 py-2.5 prose prose-sm max-w-none text-text-main [&_p]:leading-relaxed [&_p]:my-1 [&_code]:rounded [&_code]:bg-muted [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:text-[13px] [&_pre]:my-2 [&_pre]:rounded-md [&_pre]:bg-[#1e1e1e] [&_pre]:p-3 [&_pre]:text-white [&_pre_code]:bg-transparent [&_pre_code]:p-0">
+                  {message.content ? (
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {message.content}
+                    </ReactMarkdown>
+                  ) : loading ? (
                     <span className="inline-flex gap-1">
                       <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-text-muted [animation-delay:-0.3s]"></span>
                       <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-text-muted [animation-delay:-0.15s]"></span>
@@ -92,7 +98,7 @@ export default function ChatPanel() {
                     </span>
                   ) : (
                     <span className="text-text-muted">已停止</span>
-                  ))}
+                  )}
                 </div>
                 {message.sources && message.sources.length > 0 && (
                   <div className="text-xs text-text-muted">
