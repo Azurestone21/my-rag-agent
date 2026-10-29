@@ -17,7 +17,9 @@ import { ChatService } from '../chat/chat.service.js';
 import { CreateServiceCallDto } from './dto/create-service-call.dto.js';
 import { StreamMessageDto } from './dto/stream-message.dto.js';
 import { ServiceCallService } from './service-call.service.js';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('服务调用')
 @Controller('service-calls')
 export class ServiceCallController {
   constructor(
@@ -25,11 +27,13 @@ export class ServiceCallController {
     private readonly chat: ChatService,
   ) {}
 
+  @ApiOperation({ summary: '创建服务调用' })
   @Post()
   create(@Body() dto: CreateServiceCallDto): Promise<ServiceCallDto> {
     return this.service.create(dto);
   }
 
+  @ApiOperation({ summary: '获取所有服务调用' })
   @Get()
   findAll(
     @Query('knowledgeBaseId') knowledgeBaseId?: string,
@@ -37,16 +41,19 @@ export class ServiceCallController {
     return this.service.findAll(knowledgeBaseId);
   }
 
+  @ApiOperation({ summary: '获取服务调用详情' })
   @Get(':id')
   findOne(@Param('id', ParseUUIDPipe) id: string): Promise<ServiceCallDto> {
     return this.service.findOne(id);
   }
 
+  @ApiOperation({ summary: '删除服务调用' })
   @Delete(':id')
   remove(@Param('id', ParseUUIDPipe) id: string): Promise<boolean> {
     return this.service.remove(id);
   }
 
+  @ApiOperation({ summary: '服务调用流' })
   @Post(':id/chat/stream')
   async stream(
     @Param('id', ParseUUIDPipe) id: string,

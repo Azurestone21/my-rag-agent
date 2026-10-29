@@ -16,11 +16,14 @@ import { mkdirSync } from 'node:fs';
 import { extname, join } from 'node:path';
 import type { DocumentDto, ChunkProcessConfig } from '@my-rag-agent/shared';
 import { DocumentService } from './document.service.js';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('文档')
 @Controller('documents')
 export class DocumentController {
   constructor(private readonly service: DocumentService) {}
 
+  @ApiOperation({ summary: '上传文档' })
   @Post('upload')
   @UseInterceptors(
     FileInterceptor('file', {
@@ -32,7 +35,10 @@ export class DocumentController {
         },
         filename: (_req, file, callback) => {
           const unique = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-          callback(null, `${unique}${extname(file.originalname).toLowerCase()}`);
+          callback(
+            null,
+            `${unique}${extname(file.originalname).toLowerCase()}`,
+          );
         },
       }),
       fileFilter: (_req, file, callback) => {
@@ -42,7 +48,9 @@ export class DocumentController {
           callback(null, true);
         } else {
           callback(
-            new BadRequestException('仅支持 .csv / .xlsx / .xls / .txt / .md 文件'),
+            new BadRequestException(
+              '仅支持 .csv / .xlsx / .xls / .txt / .md 文件',
+            ),
             false,
           );
         }
@@ -59,7 +67,9 @@ export class DocumentController {
       throw new BadRequestException('请上传文件');
     }
     if (!this.service.isExtensionAllowed(file.originalname)) {
-      throw new BadRequestException('仅支持 .csv / .xlsx / .xls / .txt / .md 文件');
+      throw new BadRequestException(
+        '仅支持 .csv / .xlsx / .xls / .txt / .md 文件',
+      );
     }
     if (!knowledgeBaseId) {
       throw new BadRequestException('缺少 knowledgeBaseId');
@@ -75,6 +85,7 @@ export class DocumentController {
     return this.service.create(knowledgeBaseId, file, config);
   }
 
+  @ApiOperation({ summary: '查询所有文档' })
   @Get()
   findAll(
     @Query('knowledgeBaseId') knowledgeBaseId?: string,
@@ -82,11 +93,13 @@ export class DocumentController {
     return this.service.findAll(knowledgeBaseId);
   }
 
+  @ApiOperation({ summary: '查询文档详情' })
   @Get(':id')
   findOne(@Param('id', ParseUUIDPipe) id: string): Promise<DocumentDto> {
     return this.service.findOne(id);
   }
 
+  @ApiOperation({ summary: '删除文档' })
   @Delete(':id')
   remove(@Param('id', ParseUUIDPipe) id: string): Promise<boolean> {
     return this.service.remove(id);
