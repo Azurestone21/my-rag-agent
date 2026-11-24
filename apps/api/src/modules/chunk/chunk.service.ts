@@ -1,14 +1,19 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { RecursiveCharacterTextSplitter } from '@langchain/textsplitters';
 import { promises as fs } from 'node:fs';
 import { extname } from 'node:path';
 import { Repository } from 'typeorm';
 import XLSX from 'xlsx';
-import type {
-  ChunkDto,
-  ChunkProcessResultDto,
-  ChunkProcessConfig,
+import {
+  type ChunkDto,
+  type ChunkProcessResultDto,
+  type ChunkProcessConfig,
+  DocumentStatusMap,
 } from '@my-rag-agent/shared';
 import { Chunk } from '../../entities/chunk.entity.js';
 import { Document } from '../../entities/document.entity.js';
@@ -76,7 +81,10 @@ function resolveTableRange(
   return { headerRowIndex, dataStartIndex };
 }
 
-function resolveConfig(raw: Record<string, unknown> | null, ext: string): ChunkProcessConfig {
+function resolveConfig(
+  raw: Record<string, unknown> | null,
+  ext: string,
+): ChunkProcessConfig {
   if (raw) {
     return raw as unknown as ChunkProcessConfig;
   }
@@ -88,6 +96,11 @@ function resolveConfig(raw: Record<string, unknown> | null, ext: string): ChunkP
   return { fileType: 'text', splitMode: 'auto' };
 }
 
+/**
+ * 自定义分隔符切片：
+ * - 优先使用第一个分隔符（如 "\n"）切分
+ * - 其他分隔符作为回退，按字符切分
+ */
 function splitBySeparator(
   text: string,
   separators: string[],
@@ -119,6 +132,9 @@ function splitBySeparator(
 
 @Injectable()
 export class ChunkService {
+  // 维护当前被取消的任务 ID
+  private cancelledTasks = new Set<string>();
+
   constructor(
     @InjectRepository(Chunk)
     private readonly chunks: Repository<Chunk>,
@@ -127,37 +143,62 @@ export class ChunkService {
     private readonly embeddings: EmbeddingsService,
   ) {}
 
+  // 辅助方法：检查是否被取消
+  private checkCancelled(documentId: string) {
+    if (this.cancelledTasks.has(documentId)) {
+      throw new Error('TASK_CANCELLED');
+    }
+  }
+
+  cancelProcess(documentId: string) {
+    this.cancelledTasks.add(documentId);
+  }
+
   async process(documentId: string): Promise<ChunkProcessResultDto> {
+    // 开始处理前，先清空之前的取消标记，防止误杀
+    this.cancelledTasks.delete(documentId);
+
     const document = await this.documents.findOneBy({ id: documentId });
     if (!document) {
       throw new NotFoundException(`文档 ${documentId} 不存在`);
     }
 
-    document.status = 'processing';
+    document.status = DocumentStatusMap.processing;
     await this.documents.save(document);
 
     try {
+      // 文档后缀
       const ext = extname(document.filePath).toLowerCase();
+      // 解析配置
       const config = resolveConfig(document.config, ext);
-
+      // 提取文件内容
       const text = await this.extractText(document.filePath, config);
 
       let parts: string[];
       if (config.fileType === 'table') {
+        // 表格按行切片
         parts = text
           .split('\n')
           .map((line) => line.trim())
           .filter((line) => line.length > 0);
       } else if (config.splitMode === 'auto') {
-        const splitter = new RecursiveCharacterTextSplitter(DEFAULT_TEXT_SPLITTER);
+        // 自动切片
+        const splitter = new RecursiveCharacterTextSplitter(
+          DEFAULT_TEXT_SPLITTER,
+        );
         parts = await splitter.splitText(text);
       } else {
+        // 获取自定义分隔符
         const separators = resolveTextSeparators(config.separator);
+        // 自定义分隔符切片
         parts = splitBySeparator(text, separators, config.chunkSize);
       }
 
-      await this.chunks.delete({ documentId });
+      this.checkCancelled(documentId); // 检查取消
 
+      await this.chunks.delete({ documentId }); 
+
+      // 创建 chunk 实体
       const entities = parts.map((part, index) =>
         this.chunks.create({
           documentId,
@@ -167,31 +208,47 @@ export class ChunkService {
           embedding: null,
         }),
       );
-      await this.chunks.save(entities);
 
       // 百炼 embedding 接口单次批量上限 20，超出需分批
       const vectors: number[][] = [];
       const BATCH_SIZE = 20;
       for (let i = 0; i < entities.length; i += BATCH_SIZE) {
+        this.checkCancelled(documentId); //检查取消
+
+        // 请求大模型批量将切片处理为向量
         const batch = entities
           .slice(i, i + BATCH_SIZE)
           .map((entity) => entity.content);
         vectors.push(...(await this.embeddings.embedTexts(batch)));
       }
+
+      this.checkCancelled(documentId); // 检查取消
+
       entities.forEach((entity, index) => {
         entity.embedding = this.toVectorString(vectors[index]);
       });
+
+      // 保存 chunk 实体
       await this.chunks.save(entities);
 
-      document.status = 'completed';
+      document.status = DocumentStatusMap.completed;
       document.chunkCount = entities.length;
       await this.documents.save(document);
 
       return { documentId, chunkCount: entities.length };
     } catch (error) {
-      document.status = 'failed';
-      await this.documents.save(document);
-      throw error;
+      // 处理取消和异常
+      if ((error as Error)?.message === 'TASK_CANCELLED') {
+        document.status = DocumentStatusMap.canceled;
+        // 清理脏数据
+        await this.chunks.delete({ documentId });
+        await this.documents.delete({ id: documentId });
+        throw new BadRequestException('取消上传');
+      } else {
+        document.status = DocumentStatusMap.failed;
+        await this.documents.save(document);
+        throw error;
+      }
     }
   }
 
@@ -252,7 +309,9 @@ export class ChunkService {
     }
     entity.content = content;
     entity.charCount = content.length;
-    entity.embedding = this.toVectorString(await this.embeddings.embedQuery(content));
+    entity.embedding = this.toVectorString(
+      await this.embeddings.embedQuery(content),
+    );
     const saved = await this.chunks.save(entity);
     return this.toDto(saved);
   }
@@ -265,11 +324,19 @@ export class ChunkService {
     return true;
   }
 
+  /**
+   * 从文件路径提取文本内容，支持 CSV、Excel 等格式。
+   * @param filePath - 文件路径
+   * @param config - 处理配置
+   * @returns 提取到的文本内容
+   */
   private async extractText(
     filePath: string,
     config?: ChunkProcessConfig,
   ): Promise<string> {
+    // 文档后缀
     const ext = extname(filePath).toLowerCase();
+    // 文本类文件：直接读取原始内容，后续用 TextSplitter 切片
     if (ext === '.txt' || ext === '.md' || ext === '.csv') {
       if (ext === '.csv' && config?.fileType === 'table') {
         return this.parseCsvWithConfig(filePath, config);
@@ -337,11 +404,19 @@ export class ChunkService {
     throw new Error(`不支持的文件类型: ${ext}`);
   }
 
+  /**
+   * 解析 CSV 文件，根据配置提取表格数据。
+   * @param filePath - CSV 文件路径
+   * @param config - 处理配置
+   * @returns 解析后的表格数据
+   */
   private async parseCsvWithConfig(
     filePath: string,
     config: { fileType: 'table'; headerRow: number; dataRow: number },
   ): Promise<string> {
+    // 读取原始内容
     const content = await fs.readFile(filePath, 'utf-8');
+    // 获取所有行
     const rawRows = content
       .split(/\r?\n/)
       .map((line) => line.split(',').map((cell) => cell.trim()));
@@ -356,10 +431,13 @@ export class ChunkService {
     if (headers.length === 0) return '';
     const lines: string[] = [];
 
+    // 遍历数据行
     for (let i = dataStartIndex; i < rawRows.length; i++) {
       const row = rawRows[i];
+      // 跳过空行
       if (row.every((c) => c === '')) continue;
       const obj: Record<string, string> = {};
+      // 遍历表头，提取有效值
       headers.forEach((h, idx) => {
         const val = row[idx];
         if (val && val.trim() !== '') obj[h] = val.trim();
@@ -382,6 +460,10 @@ export class ChunkService {
     };
   }
 
+  /**
+   * 将向量转换为字符串表示，用于存储到数据库
+   * @returns 向量字符串表示
+   */
   private toVectorString(vector: number[]): string {
     return `[${vector.join(',')}]`;
   }

@@ -85,6 +85,12 @@ export class DocumentController {
     return this.service.create(knowledgeBaseId, file, config);
   }
 
+  @ApiOperation({ summary: '取消上传文档' })
+  @Post('cancel/:id')
+  cancel(@Param('id', ParseUUIDPipe) id: string): Promise<boolean> {
+    return this.service.cancel(id);
+  }
+
   @ApiOperation({ summary: '查询所有文档' })
   @Get()
   findAll(

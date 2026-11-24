@@ -1,10 +1,17 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { promises as fs } from 'node:fs';
 import { extname, join } from 'node:path';
 import { Repository } from 'typeorm';
-import type { DocumentDto, DocumentStatus, ChunkProcessConfig } from '@my-rag-agent/shared';
+import type {
+  DocumentDto,
+  ChunkProcessConfig,
+} from '@my-rag-agent/shared';
 import { Document } from '../../entities/document.entity.js';
 import { ChunkService } from '../chunk/chunk.service.js';
 
@@ -38,17 +45,24 @@ export class DocumentService {
       knowledgeBaseId,
       name: decodeFileName(file.originalname),
       filePath: file.path,
-      status: 'pending' as DocumentStatus,
-      importMethod: 'local_upload',
-      strategy: config ? `custom:${config.fileType}` : 'my_rag_agent_init_version',
+      status: 1,
+      importMethod: 1,
+      strategy:
+        config && 'splitMode' in config && config?.splitMode !== 'auto' ? 2 : 1,
       chunkCount: 0,
       config: (config ?? null) as Record<string, unknown> | null,
     });
     const saved = await this.repository.save(entity);
+    // 异步处理切片
     void this.chunkService.process(saved.id).catch((error: Error) => {
       this.logger.error(`文档 ${saved.id} 自动切片失败: ${error.message}`);
     });
     return this.toDto(saved);
+  }
+
+  async cancel(id: string): Promise<boolean> {
+    await this.chunkService.cancelProcess(id);
+    return true;
   }
 
   async findAll(knowledgeBaseId?: string): Promise<DocumentDto[]> {
@@ -83,7 +97,7 @@ export class DocumentService {
       id: entity.id,
       knowledgeBaseId: entity.knowledgeBaseId,
       name: entity.name,
-      status: entity.status as DocumentStatus,
+      status: entity.status,
       strategy: entity.strategy,
       chunkCount: entity.chunkCount,
       importMethod: entity.importMethod,
