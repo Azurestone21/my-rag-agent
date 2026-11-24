@@ -2,7 +2,7 @@ import type { SearchResultDto } from './search.js'
 
 export interface ChatMessageDto {
   id: string
-  role: 'user' | 'assistant'
+  role: string
   content: string
   sources?: SearchResultDto[]
   createdAt: string
