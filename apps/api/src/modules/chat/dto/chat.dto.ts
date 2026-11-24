@@ -1,8 +1,10 @@
 import { Type } from 'class-transformer';
 import { IsOptional, Max, Min } from 'class-validator';
 import { SearchDto } from '../../search/dto/search.dto.js';
+import { ApiProperty } from '@nestjs/swagger';
 
 export class ChatDto extends SearchDto {
+  @ApiProperty({ description: '温度' })
   @IsOptional()
   @Type(() => Number)
   @Min(0)

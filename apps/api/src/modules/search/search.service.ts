@@ -35,12 +35,15 @@ export class SearchService {
     private readonly rerank: RerankService,
   ) {}
 
+  /**
+   * 搜索知识片段（向量检索 + 关键词检索 + 加权融合 + 重排序）
+   */
   async search(dto: SearchDto): Promise<SearchResultDto[]> {
     const hybridTopK = dto.topK * 4; // 两边各取更多，融合后再截断
 
     // ========== 1. 向量检索（语义相似度） ==========
-    const vector = await this.embeddings.embedQuery(dto.query);
-    const vectorLiteral = `[${vector.join(',')}]`;
+    const vector = await this.embeddings.embedQuery(dto.query); // 生成查询向量
+    const vectorLiteral = `[${vector.join(',')}]`; // 向量字面值
 
     const vectorRows = await this.chunks
       .createQueryBuilder('c')
@@ -49,14 +52,14 @@ export class SearchService {
       .select('c.id', 'chunkId')
       .addSelect('d.name', 'documentName')
       .addSelect('c.content', 'content')
-      .addSelect('1 - (c.embedding <=> :vector)', 'similarity')
+      .addSelect('1 - (c.embedding <=> :vector)', 'similarity') // 计算余弦距离。距离越小越相似
       .where('kb.id = :knowledgeBaseId', {
         knowledgeBaseId: dto.knowledgeBaseId,
       })
       .andWhere('c.embedding IS NOT NULL')
-      .orderBy('c.embedding <=> :vector', 'ASC')
+      .orderBy('c.embedding <=> :vector', 'ASC') // 按余弦相似度排序
       .limit(hybridTopK)
-      .setParameter('vector', vectorLiteral)
+      .setParameter('vector', vectorLiteral) // 设置向量参数
       .getRawMany<SearchRow>();
 
     // ========== 2. 关键词检索（Postgres 原生全文检索） ==========
@@ -67,7 +70,7 @@ export class SearchService {
     )
       .map((w) => w.replace(/[|&!*()]/g, '')) // 剔除特殊字符，防止 to_tsquery 报错
       .filter((w) => w.length > 0)
-      .map((w) => w + ':*'); // 加前缀匹配
+      .map((w) => w + ':*'); // 加 to_tsquery 前缀匹配通配符，匹配相似的词干
     const keywordQuery = keywordTokens.join(' & ');
 
     const keywordRows: SearchRow[] = keywordQuery
@@ -81,13 +84,13 @@ export class SearchService {
           .addSelect(
             "ts_rank(to_tsvector('simple', c.content), to_tsquery('simple', :keywordQuery))",
             'similarity',
-          )
+          ) // 计算 ts_rank
           .where('kb.id = :knowledgeBaseId', {
             knowledgeBaseId: dto.knowledgeBaseId,
           })
           .andWhere(
             "to_tsvector('simple', c.content) @@ to_tsquery('simple', :keywordQuery)",
-          )
+          ) 
           .orderBy('similarity', 'DESC')
           .limit(hybridTopK)
           .setParameter('keywordQuery', keywordQuery)
