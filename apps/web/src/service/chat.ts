@@ -1,5 +1,5 @@
 import type { SearchResultDto } from '@my-rag-agent/shared'
-import { API_BASE } from './request'
+import { API_BASE, getToken } from './request'
 
 type StreamCallbacks = {
   onSources: (sources: SearchResultDto[]) => void
@@ -21,9 +21,13 @@ export const chatApi = {
     signal?: AbortSignal,
   ): Promise<void> => {
     const baseUrl = API_BASE
+    const token = getToken()
     const res = await fetch(`${baseUrl}/chat/stream`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
       body: JSON.stringify(params),
       signal,
     })

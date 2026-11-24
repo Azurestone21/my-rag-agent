@@ -1,8 +1,23 @@
-export const API_BASE =
-  import.meta.env.VITE_API_BASE_URL ?? '/api'
+import { TOKEN_KEY } from '@/constants/stroage.constants'
+import { useAuthStore } from '@/store/auth'
+
+export const API_BASE = import.meta.env.VITE_API_BASE_URL ?? '/api'
 
 /** 默认请求超时（毫秒）：60 秒 */
 const DEFAULT_TIMEOUT = 60000
+
+export function getToken(): string | null {
+  return localStorage.getItem(TOKEN_KEY)
+}
+
+function handleUnauthorized() {
+  useAuthStore.getState().logout()
+  const redirect = encodeURIComponent(
+    window.location.pathname + window.location.search,
+  )
+  if (window.location.pathname === '/login') return
+  window.location.href = `/login?redirect=${redirect}`
+}
 
 /**
  * 通用请求封装：拼接 API 地址、自动设置 JSON 请求头（FormData 除外）、
@@ -13,6 +28,13 @@ export async function request<T>(
   init?: RequestInit & { timeout?: number },
 ): Promise<T> {
   const headers = new Headers(init?.headers)
+
+  // 自动设置 Authorization 头（如果未设置）
+  if (!headers.has('Authorization')) {
+    const token = getToken()
+    if (token) headers.set('Authorization', `Bearer ${token}`)
+  }
+
   // 自动设置 Content-Type 头（FormData 除外）
   if (init?.body && !headers.has('Content-Type')) {
     const b = init.body
@@ -37,6 +59,10 @@ export async function request<T>(
 
   try {
     const res = await fetch(`${API_BASE}${path}`, { ...init, headers, signal })
+    if (res.status === 401) {
+      handleUnauthorized()
+      throw new Error('登录已过期，请重新登录')
+    }
     if (!res.ok) {
       let message = `请求失败 (${res.status})`
       try {
@@ -51,7 +77,7 @@ export async function request<T>(
     const text = await res.text()
     if (!text) return undefined as T
     try {
-      return JSON.parse(text) as T
+      return JSON.parse(text)?.data as T
     } catch {
       throw new Error(`响应不是合法 JSON: ${text.slice(0, 100)}`)
     }
