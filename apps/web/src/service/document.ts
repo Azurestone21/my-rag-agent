@@ -31,6 +31,12 @@ export const documentApi = {
     })
   },
   /**
+   * 取消上传
+   * @param id 文档 ID
+   */
+  cancelUpload: (id: string) =>
+    request<void>(`/documents/cancel/${id}`, { method: 'POST' }),
+  /**
    * 获取单个文档详情
    * @param id 文档 ID
    */
