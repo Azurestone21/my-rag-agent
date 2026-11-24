@@ -21,6 +21,14 @@ export default defineConfig([
     rules: {
       semi: ['error', 'never'], // 禁止使用分号
       quotes: ['error', 'single'], // 引号必须使用单引号
+      overrides: [
+        {
+          files: 'src/components/ui/**/*.{ts,tsx}',
+          options: {
+            singleQuote: false,
+          },
+        },
+      ],
     },
   },
 ])
