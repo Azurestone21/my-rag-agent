@@ -49,7 +49,7 @@ export default function ChatPanel() {
   }
 
   return (
-    <div className="flex h-full min-h-[520px] flex-col rounded-lg border border-border-subtle bg-panel">
+    <div className="flex h-full min-h-130 flex-col rounded-lg border border-border-subtle bg-panel">
       <div className="flex items-center justify-between border-b border-border-subtle px-4 py-3">
         <h2 className="text-sm font-semibold text-text-main">知识问答</h2>
         <span className="text-xs text-text-muted">

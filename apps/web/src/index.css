@@ -84,4 +84,9 @@
   body {
     @apply bg-page text-text-main antialiased;
   }
+
+  .hide-scrollbar {
+    overflow: auto;
+    scrollbar-width: none;
+  }
 }

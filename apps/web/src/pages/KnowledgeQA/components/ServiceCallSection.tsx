@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { KeyRound, Plus, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
-import CreateServiceCallDialog from '@/components/qa/CreateServiceCallDialog'
+import CreateServiceCallDialog from '@/pages/KnowledgeQA/components/CreateServiceCallDialog'
 import { Button } from '@/components/ui/button'
 import { useChatStore } from '@/store/chat'
 import type { ServiceCallDto } from '@my-rag-agent/shared'

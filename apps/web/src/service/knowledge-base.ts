@@ -35,4 +35,12 @@ export const knowledgeBaseApi = {
    */
   delete: (id: string) =>
     request<void>(`/knowledge-bases/${id}`, { method: 'DELETE' }),
+
+  /**
+   * 获取知识库详情
+   * @param id 知识库 ID
+   * @returns 知识库
+   */
+  getById: (id: string) =>
+    request<KnowledgeBaseDto>(`/knowledge-bases/${id}`),
 }

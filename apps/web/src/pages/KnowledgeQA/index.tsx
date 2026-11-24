@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
 import SearchParamsPanel from '@/components/params/SearchParamsPanel'
-import ApiCallDialog from '@/components/qa/ApiCallDialog'
-import ChatPanel from '@/components/qa/ChatPanel'
-import ServiceCallSection from '@/components/qa/ServiceCallSection'
-import SourcesPanel from '@/components/qa/SourcesPanel'
+import ApiCallDialog from '@/pages/KnowledgeQA/components/ApiCallDialog'
+import ChatPanel from '@/pages/KnowledgeQA/components/ChatPanel'
+import ServiceCallSection from '@/pages/KnowledgeQA/components/ServiceCallSection'
+import SourcesPanel from '@/pages/KnowledgeQA/components/SourcesPanel'
 import { useChatStore } from '@/store/chat'
 import { useKnowledgeBaseStore } from '@/store/knowledgeBase'
 import type { ServiceCallDto } from '@my-rag-agent/shared'
@@ -31,7 +31,7 @@ export default function KnowledgeQAPage() {
   }
 
   return (
-    <div className="flex h-full items-start gap-4">
+    <div className="w-full h-full flex items-start gap-4 overflow-x-auto hide-scrollbar">
       <aside className="w-72 shrink-0 space-y-4">
         <SearchParamsPanel
           title="模型回答参数"
@@ -41,11 +41,11 @@ export default function KnowledgeQAPage() {
         <ServiceCallSection onViewService={handleViewService} />
       </aside>
 
-      <div className="h-full min-w-0 flex-1">
+      <div className="flex-1 h-full min-w-100">
         <ChatPanel />
       </div>
 
-      <aside className="flex h-full min-h-0 w-72 shrink-0 flex-col">
+      <aside className="flex w-72 h-full shrink-0 flex-col">
         <SourcesPanel />
       </aside>
 

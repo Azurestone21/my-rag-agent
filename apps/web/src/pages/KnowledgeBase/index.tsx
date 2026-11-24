@@ -3,7 +3,7 @@ import { Database, Trash2 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import type { KnowledgeBaseDto } from '@my-rag-agent/shared'
-import KnowledgeBaseDialog from '@/components/business/CreateKnowledgeBaseButton'
+import KnowledgeBaseDialog from '@/pages/KnowledgeBase/components/CreateKnowledgeBaseButton'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/dialog'
 import { useKnowledgeBaseStore } from '@/store/knowledgeBase'
 import { formatDateTime } from '@/lib/format'
+import { ConfirmDelete } from '@/components/common/ConfirmDelete'
 
 export default function KnowledgeBasePage() {
   const knowledgeBases = useKnowledgeBaseStore((state) => state.knowledgeBases)
@@ -30,7 +31,7 @@ export default function KnowledgeBasePage() {
 
   const handleOpen = (kb: KnowledgeBaseDto) => {
     selectKb(kb.id)
-    navigate('/documents')
+    navigate(`/knowledge-detail/${kb.id}`)
   }
 
   const handleDelete = async () => {
@@ -111,15 +112,21 @@ export default function KnowledgeBasePage() {
                 </Button>
                 <div className="flex items-center gap-1">
                   <KnowledgeBaseDialog kb={kb} />
-                  <Button
-                    variant="ghost"
-                    size="icon-sm"
-                    className="text-text-muted hover:text-red-600"
-                    onClick={() => setDeletingKb(kb)}
-                    aria-label={`删除知识库 ${kb.name}`}
-                  >
-                    <Trash2 />
-                  </Button>
+                  <ConfirmDelete
+                    title="确认删除"
+                    description={`确认删除知识库吗？删除后将无法恢复`}
+                    onConfirm={() => setDeletingKb(kb)}
+                    triggerLabel={
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        className="text-text-muted hover:text-red-600"
+                        aria-label={`删除知识库 ${kb.name}`}
+                      >
+                        <Trash2 />
+                      </Button>
+                    }
+                  />
                 </div>
               </div>
             </div>

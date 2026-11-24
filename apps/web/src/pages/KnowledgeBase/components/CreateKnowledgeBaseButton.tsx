@@ -28,8 +28,8 @@ type Props = {
 
 export default function KnowledgeBaseDialog({ kb, trigger }: Props) {
   const [open, setOpen] = useState(false)
-  const [name, setName] = useState('')
-  const [description, setDescription] = useState('')
+  const [name, setName] = useState(kb?.name || '')
+  const [description, setDescription] = useState(kb?.description || '')
   const createKb = useKnowledgeBaseStore((state) => state.createKb)
   const updateKb = useKnowledgeBaseStore((state) => state.updateKb)
 
@@ -50,7 +50,13 @@ export default function KnowledgeBaseDialog({ kb, trigger }: Props) {
       }
       setOpen(false)
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : (isEdit ? '更新失败' : '创建失败'))
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : isEdit
+            ? '更新失败'
+            : '创建失败',
+      )
     }
   }
 
@@ -78,7 +84,9 @@ export default function KnowledgeBaseDialog({ kb, trigger }: Props) {
           <DialogHeader>
             <DialogTitle>{isEdit ? '编辑知识库' : '创建知识库'}</DialogTitle>
             <DialogDescription>
-              {isEdit ? '修改知识库名称和描述' : '按业务场景组织表格知识，沉淀可检索资料。'}
+              {isEdit
+                ? '修改知识库名称和描述'
+                : '按业务场景组织表格知识，沉淀可检索资料。'}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">

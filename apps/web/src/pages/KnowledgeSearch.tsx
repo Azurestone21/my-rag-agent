@@ -19,8 +19,8 @@ export default function KnowledgeSearchPage() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-xl font-semibold text-text-main">知识检索</h1>
-        <p className="mt-0.5 text-sm text-text-muted">
+        {/* <h1 className="text-xl font-semibold text-text-main">知识检索</h1> */}
+        <p className="h-8 flex items-center text-sm text-text-muted">
           搜索知识库切片，调试 topK、阈值与命中效果
         </p>
       </div>

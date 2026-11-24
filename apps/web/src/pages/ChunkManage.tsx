@@ -1,6 +1,14 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Eye, FileText, Layers, Pencil, Plus, Search, Trash2 } from 'lucide-react'
+import {
+  Eye,
+  FileText,
+  Layers,
+  Pencil,
+  Plus,
+  Search,
+  Trash2,
+} from 'lucide-react'
 import { toast } from 'sonner'
 import type { ChunkDto } from '@my-rag-agent/shared'
 import { Button } from '@/components/ui/button'
@@ -26,6 +34,7 @@ import { useChunkStore } from '@/store/chunk'
 import { useDocumentStore } from '@/store/document'
 import { useKnowledgeBaseStore } from '@/store/knowledgeBase'
 import { formatDateTime } from '@/lib/format'
+import { ConfirmDelete } from '@/components/common/ConfirmDelete'
 
 type ChunkDialogProps =
   | {
@@ -107,7 +116,9 @@ function ChunkDialog(props: ChunkDialogProps) {
 
   return (
     <>
-      <span onClick={() => setOpen(true)}>{props.trigger ?? defaultTrigger}</span>
+      <span onClick={() => setOpen(true)}>
+        {props.trigger ?? defaultTrigger}
+      </span>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
           <DialogHeader>
@@ -148,7 +159,9 @@ function ChunkDialog(props: ChunkDialogProps) {
             <Button variant="outline" onClick={() => setOpen(false)}>
               取消
             </Button>
-            <Button onClick={handleSubmit}>{isEdit ? '保存' : '确认新增'}</Button>
+            <Button onClick={handleSubmit}>
+              {isEdit ? '保存' : '确认新增'}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -172,7 +185,9 @@ function tryParseJson(text: string): Record<string, unknown> | null {
 export default function ChunkManagePage() {
   const chunks = useChunkStore((state) => state.chunks)
   const selectedDocumentId = useChunkStore((state) => state.selectedDocumentId)
-  const setSelectedDocumentId = useChunkStore((state) => state.setSelectedDocumentId)
+  const setSelectedDocumentId = useChunkStore(
+    (state) => state.setSelectedDocumentId,
+  )
   const searchQuery = useChunkStore((state) => state.searchQuery)
   const setSearchQuery = useChunkStore((state) => state.setSearchQuery)
   const loadChunks = useChunkStore((state) => state.load)
@@ -226,11 +241,11 @@ export default function ChunkManagePage() {
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col">
+    <div className="flex h-full flex-col overflow-auto">
       <div className="shrink-0 space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h1 className="text-xl font-semibold text-text-main">切片管理</h1>
+            {/* <h1 className="text-xl font-semibold text-text-main">切片管理</h1> */}
             <p className="mt-0.5 text-sm text-text-muted">
               共 {filteredChunks.length} 切片
             </p>
@@ -239,7 +254,7 @@ export default function ChunkManagePage() {
             <div className="relative">
               <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-text-muted" />
               <Input
-                className="w-64 pl-9"
+                className="w-64 pl-9 bg-white"
                 placeholder="搜索切片 ID"
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
@@ -251,7 +266,7 @@ export default function ChunkManagePage() {
                 setSelectedDocumentId(value === 'all' ? '' : value)
               }
             >
-              <SelectTrigger className="w-48">
+              <SelectTrigger className="w-48 bg-white">
                 <SelectValue placeholder="筛选文档" />
               </SelectTrigger>
               <SelectContent>
@@ -275,7 +290,9 @@ export default function ChunkManagePage() {
         {filteredChunks.length === 0 ? (
           <div className="flex h-64 flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-border-subtle bg-panel text-sm text-text-muted">
             <Layers className="size-8 text-text-muted" />
-            {searchQuery || selectedDocumentId ? '未找到匹配的切片' : '暂无切片'}
+            {searchQuery || selectedDocumentId
+              ? '未找到匹配的切片'
+              : '暂无切片'}
           </div>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -299,18 +316,27 @@ export default function ChunkManagePage() {
                   {chunk.id}.{chunk.index}
                 </div>
                 <div className="mt-2 flex-1 rounded-md bg-page p-2">
-                  <div className="flex-1 overflow-y-auto text-sm leading-relaxed text-text-main [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" style={{ maxHeight: '5lh' }}>
+                  <div
+                    className="flex-1 overflow-y-auto text-sm leading-relaxed text-text-main [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                    style={{ maxHeight: '5lh' }}
+                  >
                     {(() => {
                       const obj = tryParseJson(chunk.content)
                       if (obj) {
                         return Object.entries(obj).map(([key, value]) => (
                           <div key={key} className="flex gap-1.5">
-                            <span className="shrink-0 font-medium text-text-secondary">{key}：</span>
+                            <span className="shrink-0 font-medium text-text-secondary">
+                              {key}：
+                            </span>
                             <span className="break-all">{String(value)}</span>
                           </div>
                         ))
                       }
-                      return <span className="whitespace-pre-line">{chunk.content}</span>
+                      return (
+                        <span className="whitespace-pre-line">
+                          {chunk.content}
+                        </span>
+                      )
                     })()}
                   </div>
                 </div>
@@ -328,15 +354,21 @@ export default function ChunkManagePage() {
                     查看原文
                   </Button>
                   <ChunkDialog chunk={chunk} />
-                  <Button
-                    variant="ghost"
-                    size="xs"
-                    className="ml-auto text-red-600 hover:text-red-700"
-                    onClick={() => handleDelete(chunk)}
-                  >
-                    <Trash2 />
-                    删除
-                  </Button>
+                  <ConfirmDelete
+                    title="确认删除"
+                    description={`确认删除切片吗？删除后将无法恢复`}
+                    onConfirm={() => handleDelete(chunk)}
+                    triggerLabel={
+                      <Button
+                        variant="ghost"
+                        size="xs"
+                        className="ml-auto text-red-600 hover:text-red-700"
+                      >
+                        <Trash2 />
+                        删除
+                      </Button>
+                    }
+                  />
                 </div>
               </div>
             ))}
@@ -367,7 +399,6 @@ export default function ChunkManagePage() {
           </div>
         </DialogContent>
       </Dialog>
-
     </div>
   )
 }
