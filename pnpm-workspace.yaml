@@ -3,3 +3,4 @@ packages:
   - "packages/*"
 allowBuilds:
   "@scarf/scarf": false # 禁用 Scarf 构建
+  bcrypt: false
