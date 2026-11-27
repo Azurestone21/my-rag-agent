@@ -1,8 +1,10 @@
 import {
   BadRequestException,
+  Body,
   Controller,
   Delete,
   Get,
+  HttpCode,
   Param,
   ParseUUIDPipe,
   Post,
@@ -14,9 +16,11 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { mkdirSync } from 'node:fs';
 import { extname, join } from 'node:path';
-import type { DocumentDto, ChunkProcessConfig } from '@my-rag-agent/shared';
+import type { ChunkProcessConfig, PageVo } from '@my-rag-agent/shared';
+import { DocumentVo } from './vo/document.vo.js';
 import { DocumentService } from './document.service.js';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { DocumentGetPageDto } from './dto/document-get-page.dto.js';
 
 @ApiTags('文档')
 @Controller('documents')
@@ -62,7 +66,7 @@ export class DocumentController {
     @UploadedFile() file: Express.Multer.File,
     @Query('knowledgeBaseId') knowledgeBaseId: string,
     @Query('config') configStr?: string,
-  ): Promise<DocumentDto> {
+  ): Promise<DocumentVo> {
     if (!file) {
       throw new BadRequestException('请上传文件');
     }
@@ -92,16 +96,17 @@ export class DocumentController {
   }
 
   @ApiOperation({ summary: '查询所有文档' })
-  @Get()
-  findAll(
-    @Query('knowledgeBaseId') knowledgeBaseId?: string,
-  ): Promise<DocumentDto[]> {
-    return this.service.findAll(knowledgeBaseId);
+  @Post('page')
+  @HttpCode(200)
+  page(
+    @Body() dto: DocumentGetPageDto,
+  ): Promise<PageVo<DocumentVo>> {
+    return this.service.page(dto);
   }
 
   @ApiOperation({ summary: '查询文档详情' })
   @Get(':id')
-  findOne(@Param('id', ParseUUIDPipe) id: string): Promise<DocumentDto> {
+  findOne(@Param('id', ParseUUIDPipe) id: string): Promise<DocumentVo> {
     return this.service.findOne(id);
   }
 

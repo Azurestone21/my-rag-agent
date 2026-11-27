@@ -10,14 +10,16 @@ import { extname } from 'node:path';
 import { Repository } from 'typeorm';
 import XLSX from 'xlsx';
 import {
-  type ChunkDto,
-  type ChunkProcessResultDto,
+  type ChunkVo,
+  type ChunkProcessVo,
   type ChunkProcessConfig,
   DocumentStatusMap,
+  PageVo,
 } from '@my-rag-agent/shared';
 import { Chunk } from '../../entities/chunk.entity.js';
 import { Document } from '../../entities/document.entity.js';
 import { EmbeddingsService } from '../embeddings/embeddings.service.js';
+import { ChunkGetPageDto } from './dto/get-page.dto.js';
 
 const DEFAULT_TEXT_SPLITTER = {
   chunkSize: 500,
@@ -154,7 +156,7 @@ export class ChunkService {
     this.cancelledTasks.add(documentId);
   }
 
-  async process(documentId: string): Promise<ChunkProcessResultDto> {
+  async process(documentId: string): Promise<ChunkProcessVo> {
     // 开始处理前，先清空之前的取消标记，防止误杀
     this.cancelledTasks.delete(documentId);
 
@@ -196,7 +198,7 @@ export class ChunkService {
 
       this.checkCancelled(documentId); // 检查取消
 
-      await this.chunks.delete({ documentId }); 
+      await this.chunks.delete({ documentId });
 
       // 创建 chunk 实体
       const entities = parts.map((part, index) =>
@@ -252,31 +254,44 @@ export class ChunkService {
     }
   }
 
-  async findAll(
-    documentId?: string,
-    knowledgeBaseId?: string,
-  ): Promise<ChunkDto[]> {
-    if (knowledgeBaseId) {
-      const entities = await this.chunks
-        .createQueryBuilder('chunk')
-        .innerJoin('chunk.document', 'doc')
-        .where('doc.knowledgeBaseId = :kbId', { kbId: knowledgeBaseId })
-        .andWhere(documentId ? 'chunk.documentId = :docId' : '1=1', {
-          docId: documentId,
-        })
-        .orderBy('chunk.chunkIndex', 'ASC')
-        .getMany();
-      return entities.map((entity) => this.toDto(entity));
+  async page(dto: ChunkGetPageDto): Promise<PageVo<ChunkVo>> {
+    let { pageNum, pageSize, documentId, knowledgeBaseId, keyword } = dto;
+    if (pageSize > 500) {
+      pageSize = 500;
     }
-    const where = documentId ? { documentId } : {};
-    const entities = await this.chunks.find({
-      where,
-      order: { chunkIndex: 'ASC' },
-    });
-    return entities.map((entity) => this.toDto(entity));
+    const qb = this.chunks
+      .createQueryBuilder('chunk')
+      .innerJoin('chunk.document', 'doc')
+      .orderBy('chunk.chunkIndex', 'ASC')
+      .skip((pageNum - 1) * pageSize)
+      .take(pageSize);
+
+    if (knowledgeBaseId) {
+      qb.andWhere('doc.knowledgeBaseId = :kbId', { kbId: knowledgeBaseId });
+    }
+    if (documentId) {
+      qb.andWhere('chunk.documentId = :docId', { docId: documentId });
+    }
+    if (keyword) {
+      const escapedKeyword = keyword.replace(/[\\%_]/g, '\\$&');
+      qb.andWhere('chunk.content ILIKE :keyword', {
+        keyword: `%${escapedKeyword}%`,
+      });
+    }
+
+    const [entities, total] = await qb.getManyAndCount();
+
+    return {
+      list: entities.map((entity) => this.toDto(entity)),
+      total,
+      havePrev: pageNum > 1,
+      haveNext: total > pageNum * pageSize,
+      pageNum,
+      pageSize,
+    };
   }
 
-  async findOne(id: string): Promise<ChunkDto> {
+  async findOne(id: string): Promise<ChunkVo> {
     const entity = await this.chunks.findOneBy({ id });
     if (!entity) {
       throw new NotFoundException(`切片 ${id} 不存在`);
@@ -284,7 +299,7 @@ export class ChunkService {
     return this.toDto(entity);
   }
 
-  async create(documentId: string, content: string): Promise<ChunkDto> {
+  async create(documentId: string, content: string): Promise<ChunkVo> {
     const document = await this.documents.findOneBy({ id: documentId });
     if (!document) {
       throw new NotFoundException(`文档 ${documentId} 不存在`);
@@ -302,7 +317,7 @@ export class ChunkService {
     return this.toDto(saved);
   }
 
-  async update(id: string, content: string): Promise<ChunkDto> {
+  async update(id: string, content: string): Promise<ChunkVo> {
     const entity = await this.chunks.findOneBy({ id });
     if (!entity) {
       throw new NotFoundException(`切片 ${id} 不存在`);
@@ -449,7 +464,7 @@ export class ChunkService {
     return lines.join('\n');
   }
 
-  private toDto(entity: Chunk): ChunkDto {
+  private toDto(entity: Chunk): ChunkVo {
     return {
       id: entity.id,
       documentId: entity.documentId,

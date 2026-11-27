@@ -1,19 +1,14 @@
-import {
-  Injectable,
-  Logger,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { promises as fs } from 'node:fs';
 import { extname, join } from 'node:path';
 import { Repository } from 'typeorm';
-import type {
-  DocumentDto,
-  ChunkProcessConfig,
-} from '@my-rag-agent/shared';
+import type { ChunkProcessConfig, PageVo } from '@my-rag-agent/shared';
+import { DocumentVo } from './vo/document.vo.js';
 import { Document } from '../../entities/document.entity.js';
 import { ChunkService } from '../chunk/chunk.service.js';
+import { DocumentGetPageDto } from './dto/document-get-page.dto.js';
 
 const ALLOWED_EXTENSIONS = ['.csv', '.xlsx', '.xls', '.txt', '.md'];
 
@@ -40,7 +35,7 @@ export class DocumentService {
     knowledgeBaseId: string,
     file: Express.Multer.File,
     config?: ChunkProcessConfig,
-  ): Promise<DocumentDto> {
+  ): Promise<DocumentVo> {
     const entity = this.repository.create({
       knowledgeBaseId,
       name: decodeFileName(file.originalname),
@@ -65,16 +60,36 @@ export class DocumentService {
     return true;
   }
 
-  async findAll(knowledgeBaseId?: string): Promise<DocumentDto[]> {
-    const where = knowledgeBaseId ? { knowledgeBaseId } : {};
-    const entities = await this.repository.find({
-      where,
-      order: { createdAt: 'DESC' },
-    });
-    return entities.map((entity) => this.toDto(entity));
+  async page(dto: DocumentGetPageDto): Promise<PageVo<DocumentVo>> {
+    const { pageNum, pageSize, name, knowledgeBaseId } = dto;
+    const qb = await this.repository
+      .createQueryBuilder('document')
+      .where('document.knowledgeBaseId = :knowledgeBaseId', {
+        knowledgeBaseId,
+      })
+      .orderBy('document.createdAt', 'DESC')
+      .skip((pageNum - 1) * pageSize)
+      .take(pageSize);
+
+    if (name) {
+      qb.andWhere('document.name LIKE :name', {
+        name: `%${name}%`,
+      });
+    }
+
+    const [entities, total] = await qb.getManyAndCount();
+
+    return {
+      list: entities.map((entity) => this.toDto(entity)),
+      total,
+      havePrev: pageNum > 1,
+      haveNext: total > pageNum * pageSize,
+      pageNum,
+      pageSize,
+    };
   }
 
-  async findOne(id: string): Promise<DocumentDto> {
+  async findOne(id: string): Promise<DocumentVo> {
     const entity = await this.repository.findOneBy({ id });
     if (!entity) {
       throw new NotFoundException(`文档 ${id} 不存在`);
@@ -92,7 +107,7 @@ export class DocumentService {
     return true;
   }
 
-  private toDto(entity: Document): DocumentDto {
+  private toDto(entity: Document): DocumentVo {
     return {
       id: entity.id,
       knowledgeBaseId: entity.knowledgeBaseId,

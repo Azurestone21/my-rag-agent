@@ -3,17 +3,23 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
   Param,
   ParseUUIDPipe,
   Patch,
   Post,
   Query,
 } from '@nestjs/common';
-import type { ChunkDto, ChunkProcessResultDto } from '@my-rag-agent/shared';
+import type {
+  ChunkVo,
+  ChunkProcessVo,
+  PageVo,
+} from '@my-rag-agent/shared';
 import { ChunkService } from './chunk.service.js';
 import { CreateChunkDto } from './dto/create-chunk.dto.js';
 import { UpdateChunkDto } from './dto/update-chunk.dto.js';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ChunkGetPageDto } from './dto/get-page.dto.js';
 
 @ApiTags('文档切片')
 @Controller('chunks')
@@ -24,28 +30,26 @@ export class ChunkController {
   @Post('process/:documentId')
   process(
     @Param('documentId', ParseUUIDPipe) documentId: string,
-  ): Promise<ChunkProcessResultDto> {
+  ): Promise<ChunkProcessVo> {
     return this.service.process(documentId);
   }
 
   @ApiOperation({ summary: '使用文档ID或知识库ID查询切片' })
-  @Get()
-  findAll(
-    @Query('documentId') documentId?: string,
-    @Query('knowledgeBaseId') knowledgeBaseId?: string,
-  ): Promise<ChunkDto[]> {
-    return this.service.findAll(documentId, knowledgeBaseId);
+  @Post('page')
+  @HttpCode(200)
+  page(@Body() dto: ChunkGetPageDto): Promise<PageVo<ChunkVo>> {
+    return this.service.page(dto);
   }
 
   @ApiOperation({ summary: '创建切片' })
-  @Post()
-  create(@Body() dto: CreateChunkDto): Promise<ChunkDto> {
+  @Post('create')
+  create(@Body() dto: CreateChunkDto): Promise<ChunkVo> {
     return this.service.create(dto.documentId, dto.content);
   }
 
   @ApiOperation({ summary: '查询切片' })
   @Get(':id')
-  findOne(@Param('id', ParseUUIDPipe) id: string): Promise<ChunkDto> {
+  findOne(@Param('id', ParseUUIDPipe) id: string): Promise<ChunkVo> {
     return this.service.findOne(id);
   }
 
@@ -54,7 +58,7 @@ export class ChunkController {
   update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateChunkDto,
-  ): Promise<ChunkDto> {
+  ): Promise<ChunkVo> {
     return this.service.update(id, dto.content);
   }
 
