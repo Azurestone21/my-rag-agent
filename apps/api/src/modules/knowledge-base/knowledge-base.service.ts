@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { unlink } from 'node:fs/promises';
-import type { KnowledgeBaseDto } from '@my-rag-agent/shared';
+import { KnowledgeBaseVo } from './vo/knowledge-base.vo.js';
 import { Document } from '../../entities/document.entity.js';
 import { KnowledgeBase } from '../../entities/knowledge-base.entity.js';
 import { CreateKnowledgeBaseDto } from './dto/create-knowledge-base.dto.js';
@@ -17,7 +17,7 @@ export class KnowledgeBaseService {
     private readonly documentRepository: Repository<Document>,
   ) {}
 
-  async findAll(): Promise<KnowledgeBaseDto[]> {
+  async findAll(): Promise<KnowledgeBaseVo[]> {
     const rows = await this.repository
       .createQueryBuilder('kb')
       .leftJoin('documents', 'doc', 'doc.knowledge_base_id = kb.id')
@@ -31,7 +31,7 @@ export class KnowledgeBaseService {
       .addSelect('COUNT(DISTINCT chunk.id)', 'chunkCount')
       .groupBy('kb.id')
       .orderBy('kb.createdAt', 'DESC')
-      .getRawMany<KnowledgeBaseDto>();
+      .getRawMany<KnowledgeBaseVo>();
 
     return rows.map((row) => ({
       ...row,
@@ -40,7 +40,7 @@ export class KnowledgeBaseService {
     }));
   }
 
-  async findOne(id: string): Promise<KnowledgeBaseDto> {
+  async findOne(id: string): Promise<KnowledgeBaseVo> {
     const row = await this.repository
       .createQueryBuilder('kb')
       .leftJoin('documents', 'doc', 'doc.knowledge_base_id = kb.id')
@@ -54,7 +54,7 @@ export class KnowledgeBaseService {
       .addSelect('COUNT(DISTINCT chunk.id)', 'chunkCount')
       .where('kb.id = :id', { id })
       .groupBy('kb.id')
-      .getRawOne<KnowledgeBaseDto>();
+      .getRawOne<KnowledgeBaseVo>();
 
     if (!row) {
       throw new NotFoundException(`知识库 ${id} 不存在`);
@@ -67,13 +67,13 @@ export class KnowledgeBaseService {
     };
   }
 
-  async create(dto: CreateKnowledgeBaseDto): Promise<KnowledgeBaseDto> {
+  async create(dto: CreateKnowledgeBaseDto): Promise<KnowledgeBaseVo> {
     const entity = this.repository.create(dto);
     const saved = await this.repository.save(entity);
     return this.toDto(saved);
   }
 
-  async update(id: string, dto: UpdateKnowledgeBaseDto): Promise<KnowledgeBaseDto> {
+  async update(id: string, dto: UpdateKnowledgeBaseDto): Promise<KnowledgeBaseVo> {
     const entity = await this.repository.findOneBy({ id });
     if (!entity) {
       throw new NotFoundException(`知识库 ${id} 不存在`);
@@ -102,7 +102,7 @@ export class KnowledgeBaseService {
     return true;
   }
 
-  private toDto(entity: KnowledgeBase): KnowledgeBaseDto {
+  private toDto(entity: KnowledgeBase): KnowledgeBaseVo {
     return {
       id: entity.id,
       name: entity.name,

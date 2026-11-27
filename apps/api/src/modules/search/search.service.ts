@@ -1,12 +1,12 @@
 ﻿import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import type { SearchResultDto } from '@my-rag-agent/shared';
 import { Chunk } from '../../entities/chunk.entity.js';
 import { SearchHistory } from '../../entities/search-history.entity.js';
 import { EmbeddingsService } from '../embeddings/embeddings.service.js';
 import { RerankService } from '../rerank/rerank.service.js';
 import { SearchDto } from './dto/search.dto.js';
+import { SearchVo } from './vo/search.vo.js';
 
 interface SearchRow {
   chunkId: string;
@@ -38,7 +38,7 @@ export class SearchService {
   /**
    * 搜索知识片段（向量检索 + 关键词检索 + 加权融合 + 重排序）
    */
-  async search(dto: SearchDto): Promise<SearchResultDto[]> {
+  async search(dto: SearchDto): Promise<SearchVo[]> {
     const hybridTopK = dto.topK * 4; // 两边各取更多，融合后再截断
 
     // ========== 1. 向量检索（语义相似度） ==========

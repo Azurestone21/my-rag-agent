@@ -2,9 +2,9 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { randomBytes } from 'node:crypto';
 import { Repository } from 'typeorm';
-import type { ServiceCallDto } from '@my-rag-agent/shared';
 import { ServiceCall } from '../../entities/service-call.entity.js';
 import { CreateServiceCallDto } from './dto/create-service-call.dto.js';
+import { ServiceCallVo } from './vo/service-call.vo.js';
 
 @Injectable()
 export class ServiceCallService {
@@ -13,7 +13,7 @@ export class ServiceCallService {
     private readonly repository: Repository<ServiceCall>,
   ) {}
 
-  async create(dto: CreateServiceCallDto): Promise<ServiceCallDto> {
+  async create(dto: CreateServiceCallDto): Promise<ServiceCallVo> {
     const entity = this.repository.create({
       knowledgeBaseId: dto.knowledgeBaseId,
       name: dto.name,
@@ -26,7 +26,7 @@ export class ServiceCallService {
     return this.toDto(saved);
   }
 
-  async findAll(knowledgeBaseId?: string): Promise<ServiceCallDto[]> {
+  async findAll(knowledgeBaseId?: string): Promise<ServiceCallVo[]> {
     const entities = await this.repository.find({
       where: knowledgeBaseId ? { knowledgeBaseId } : {},
       order: { createdAt: 'DESC' },
@@ -34,7 +34,7 @@ export class ServiceCallService {
     return entities.map((entity) => this.toDto(entity));
   }
 
-  async findOne(id: string): Promise<ServiceCallDto> {
+  async findOne(id: string): Promise<ServiceCallVo> {
     const entity = await this.repository.findOneBy({ id });
     if (!entity) {
       throw new NotFoundException(`服务调用 ${id} 不存在`);
@@ -54,7 +54,7 @@ export class ServiceCallService {
     return true;
   }
 
-  private toDto(entity: ServiceCall): ServiceCallDto {
+  private toDto(entity: ServiceCall): ServiceCallVo {
     return {
       id: entity.id,
       name: entity.name,

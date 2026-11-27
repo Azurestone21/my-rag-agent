@@ -2,9 +2,9 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ChatOpenAI } from '@langchain/openai';
 import type { Response } from 'express';
-import type { SearchResultDto } from '@my-rag-agent/shared';
 import { SearchService } from '../search/search.service.js';
 import { ChatDto } from './dto/chat.dto.js';
+import { SearchVo } from '../search/vo/search.vo.js';
 
 const SYSTEM_PROMPT =
   '你是一个企业 RAG 知识库问答助手。请基于提供的知识片段回答用户问题，' +
@@ -89,7 +89,7 @@ export class ChatService {
     }
   }
 
-  private buildPrompt(query: string, sources: SearchResultDto[]): string {
+  private buildPrompt(query: string, sources: SearchVo[]): string {
     const context = sources
       .map(
         (source, index) =>

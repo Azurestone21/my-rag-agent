@@ -8,7 +8,7 @@ import {
   Patch,
   Post,
 } from '@nestjs/common';
-import type { KnowledgeBaseDto } from '@my-rag-agent/shared';
+import { KnowledgeBaseVo } from './vo/knowledge-base.vo.js';
 import { CreateKnowledgeBaseDto } from './dto/create-knowledge-base.dto.js';
 import { UpdateKnowledgeBaseDto } from './dto/update-knowledge-base.dto.js';
 import { KnowledgeBaseService } from './knowledge-base.service.js';
@@ -21,19 +21,19 @@ export class KnowledgeBaseController {
 
   @ApiOperation({ summary: '查询所有知识库' })
   @Get()
-  findAll(): Promise<KnowledgeBaseDto[]> {
+  findAll(): Promise<KnowledgeBaseVo[]> {
     return this.service.findAll();
   }
 
   @ApiOperation({ summary: '查询知识库详情' })
   @Get(':id')
-  findOne(@Param('id', ParseUUIDPipe) id: string): Promise<KnowledgeBaseDto> {
+  findOne(@Param('id', ParseUUIDPipe) id: string): Promise<KnowledgeBaseVo> {
     return this.service.findOne(id);
   }
 
   @ApiOperation({ summary: '创建知识库' })
   @Post()
-  create(@Body() dto: CreateKnowledgeBaseDto): Promise<KnowledgeBaseDto> {
+  create(@Body() dto: CreateKnowledgeBaseDto): Promise<KnowledgeBaseVo> {
     return this.service.create(dto);
   }
 
@@ -42,7 +42,7 @@ export class KnowledgeBaseController {
   update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateKnowledgeBaseDto,
-  ): Promise<KnowledgeBaseDto> {
+  ): Promise<KnowledgeBaseVo> {
     return this.service.update(id, dto);
   }
 

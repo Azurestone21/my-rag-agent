@@ -1,6 +1,6 @@
 import { Controller, Get, Query } from '@nestjs/common';
-import type { SearchResultDto } from '@my-rag-agent/shared';
 import { SearchDto } from './dto/search.dto.js';
+import { SearchVo } from './vo/search.vo.js';
 import { SearchService } from './search.service.js';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 
@@ -11,7 +11,7 @@ export class SearchController {
 
   @Get()
   @ApiOperation({ summary: '检索知识库切片' })
-  search(@Query() dto: SearchDto): Promise<SearchResultDto[]> {
+  search(@Query() dto: SearchDto): Promise<SearchVo[]> {
     return this.service.search(dto);
   }
 }

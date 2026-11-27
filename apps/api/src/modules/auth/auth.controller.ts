@@ -3,7 +3,6 @@ import { AuthService } from "./auth.service.js";
 import { Controller, Post, Body } from "@nestjs/common";
 import { LoginDto } from "./dto/login.dto.js";
 import { RegisterDto } from "./dto/register.dto.js";
-import { User } from "../../entities/user.entity.js";
 import { SkipAuth } from "../../decorators/skipAuth.decorator.js";
 
 @ApiTags('认证')

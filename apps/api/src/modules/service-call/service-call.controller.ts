@@ -11,13 +11,13 @@ import {
   Res,
 } from '@nestjs/common';
 import type { Response } from 'express';
-import type { ServiceCallDto } from '@my-rag-agent/shared';
 import { ChatDto } from '../chat/dto/chat.dto.js';
 import { ChatService } from '../chat/chat.service.js';
 import { CreateServiceCallDto } from './dto/create-service-call.dto.js';
 import { StreamMessageDto } from './dto/stream-message.dto.js';
 import { ServiceCallService } from './service-call.service.js';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ServiceCallVo } from './vo/service-call.vo.js';
 
 @ApiTags('服务调用')
 @Controller('service-calls')
@@ -29,7 +29,7 @@ export class ServiceCallController {
 
   @ApiOperation({ summary: '创建服务调用' })
   @Post()
-  create(@Body() dto: CreateServiceCallDto): Promise<ServiceCallDto> {
+  create(@Body() dto: CreateServiceCallDto): Promise<ServiceCallVo> {
     return this.service.create(dto);
   }
 
@@ -37,13 +37,13 @@ export class ServiceCallController {
   @Get()
   findAll(
     @Query('knowledgeBaseId') knowledgeBaseId?: string,
-  ): Promise<ServiceCallDto[]> {
+  ): Promise<ServiceCallVo[]> {
     return this.service.findAll(knowledgeBaseId);
   }
 
   @ApiOperation({ summary: '获取服务调用详情' })
   @Get(':id')
-  findOne(@Param('id', ParseUUIDPipe) id: string): Promise<ServiceCallDto> {
+  findOne(@Param('id', ParseUUIDPipe) id: string): Promise<ServiceCallVo> {
     return this.service.findOne(id);
   }
 
