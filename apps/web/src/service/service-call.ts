@@ -1,4 +1,4 @@
-import type { ServiceCallDto } from '@my-rag-agent/shared'
+import type { ServiceCallVo } from '@my-rag-agent/shared'
 import { request } from './request'
 
 export const serviceCallApi = {
@@ -7,7 +7,7 @@ export const serviceCallApi = {
    * @param knowledgeBaseId 知识库 ID（可选，用于过滤）
    */
   list: (knowledgeBaseId?: string) =>
-    request<ServiceCallDto[]>(
+    request<ServiceCallVo[]>(
       `/service-calls${knowledgeBaseId ? `?knowledgeBaseId=${knowledgeBaseId}` : ''}`,
     ),
   /**
@@ -18,7 +18,7 @@ export const serviceCallApi = {
    * @returns 服务调用
    */
   create: (name: string, knowledgeBaseId: string, topK: number) =>
-    request<ServiceCallDto>('/service-calls', {
+    request<ServiceCallVo>('/service-calls', {
       method: 'POST',
       body: JSON.stringify({ name, knowledgeBaseId, topK }),
     }),

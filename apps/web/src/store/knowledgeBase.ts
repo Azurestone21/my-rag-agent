@@ -1,9 +1,9 @@
 import { create } from 'zustand'
-import type { KnowledgeBaseDto } from '@my-rag-agent/shared'
+import type { KnowledgeBaseVo } from '@my-rag-agent/shared'
 import { api } from '@/service'
 
 type KnowledgeBaseState = {
-  knowledgeBases: KnowledgeBaseDto[]
+  knowledgeBases: KnowledgeBaseVo[]
   selectedKbId: string
   loading: boolean
   load: () => Promise<void>
@@ -11,13 +11,13 @@ type KnowledgeBaseState = {
   createKb: (
     name: string,
     description: string,
-  ) => Promise<KnowledgeBaseDto>
+  ) => Promise<KnowledgeBaseVo>
   deleteKb: (id: string) => Promise<void>
   updateKb: (
     id: string,
     name: string,
     description: string,
-  ) => Promise<KnowledgeBaseDto>
+  ) => Promise<KnowledgeBaseVo>
 }
 
 export const useKnowledgeBaseStore = create<KnowledgeBaseState>((set) => ({

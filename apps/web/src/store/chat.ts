@@ -1,24 +1,24 @@
 import { create } from 'zustand'
 import type {
-  ChatMessageDto,
-  SearchParamsDto,
-  ServiceCallDto,
+  ChatMessageVo,
+  SearchDto,
+  ServiceCallVo,
 } from '@my-rag-agent/shared'
 import { api } from '@/service'
 import { chatApi } from '@/service/chat'
 
-const defaultParams: SearchParamsDto = {
-  resultCount: 10,
+const defaultParams: SearchDto = {
+  topK: 10,
   minSimilarity: 0.5,
   rerankModel: '0',
   denseWeight: 0.5,
 }
 
 type ChatState = {
-  params: SearchParamsDto
-  setParams: (params: Partial<SearchParamsDto>) => void
-  messages: ChatMessageDto[]
-  serviceCalls: ServiceCallDto[]
+  params: SearchDto
+  setParams: (params: Partial<SearchDto>) => void
+  messages: ChatMessageVo[]
+  serviceCalls: ServiceCallVo[]
   loading: boolean
   abortController: AbortController | null
   loadServiceCalls: (knowledgeBaseId?: string) => Promise<void>
@@ -29,7 +29,7 @@ type ChatState = {
     name: string,
     knowledgeBaseId: string,
     topK: number,
-  ) => Promise<ServiceCallDto>
+  ) => Promise<ServiceCallVo>
   deleteServiceCall: (id: string) => Promise<void>
 }
 
@@ -58,14 +58,14 @@ export const useChatStore = create<ChatState>((set, get) => ({
     const controller = new AbortController()
     set({ abortController: controller })
 
-    const userMessage: ChatMessageDto = {
+    const userMessage: ChatMessageVo = {
       id: `msg-${Date.now()}`,
       role: 'user',
       content,
       createdAt: now(),
     }
     const assistantId = `msg-${Date.now() + 1}`
-    const emptyAssistant: ChatMessageDto = {
+    const emptyAssistant: ChatMessageVo = {
       id: assistantId,
       role: 'assistant',
       content: '',
@@ -82,7 +82,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
         {
           knowledgeBaseId,
           query: content,
-          topK: params.resultCount,
+          topK: params.topK,
           minSimilarity: params.minSimilarity,
           temperature: 0.3,
         },

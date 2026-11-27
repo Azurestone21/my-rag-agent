@@ -9,13 +9,13 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Slider } from '@/components/ui/slider'
-import type { SearchParamsDto } from '@my-rag-agent/shared'
+import type { SearchDto } from '@my-rag-agent/shared'
 import { RERANK_MODEL_OPTIONS } from '@/constants/rerank.constants'
 
 type SearchParamsPanelProps = {
   title?: string
-  params: SearchParamsDto
-  onChange: (params: Partial<SearchParamsDto>) => void
+  params: SearchDto
+  onChange: (params: Partial<SearchDto>) => void
 }
 
 export default function SearchParamsPanel({
@@ -41,10 +41,10 @@ export default function SearchParamsPanel({
             type="number"
             min={1}
             max={50}
-            value={params.resultCount}
+            value={params.topK}
             onChange={(event) =>
               onChange({
-                resultCount: Math.max(1, Number(event.target.value) || 1),
+                topK: Math.max(1, Number(event.target.value) || 1),
               })
             }
           />

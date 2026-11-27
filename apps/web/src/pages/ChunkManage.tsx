@@ -10,7 +10,7 @@ import {
   Trash2,
 } from 'lucide-react'
 import { toast } from 'sonner'
-import type { ChunkDto } from '@my-rag-agent/shared'
+import type { ChunkVo } from '@my-rag-agent/shared'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -35,6 +35,7 @@ import { useDocumentStore } from '@/store/document'
 import { useKnowledgeBaseStore } from '@/store/knowledgeBase'
 import { formatDateTime } from '@/lib/format'
 import { ConfirmDelete } from '@/components/common/ConfirmDelete'
+import { useInfiniteScroll } from '@/hooks/useInfiniteScroll'
 
 type ChunkDialogProps =
   | {
@@ -46,7 +47,7 @@ type ChunkDialogProps =
     }
   | {
       /** 编辑模式 */
-      chunk: ChunkDto
+      chunk: ChunkVo
       documentId?: never
       documentName?: never
       trigger?: React.ReactNode
@@ -95,7 +96,7 @@ function ChunkDialog(props: ChunkDialogProps) {
     }
   }
 
-  const docNameMap = new Map(documents.map((d) => [d.id, d.name]))
+  const docNameMap = new Map(documents.list.map((d) => [d.id, d.name]))
   const description = isEdit
     ? `修改「${docNameMap.get(props.chunk!.documentId) ?? '未知文档'}」中的切片内容`
     : needsDocSelect
@@ -134,7 +135,7 @@ function ChunkDialog(props: ChunkDialogProps) {
                     <SelectValue placeholder="选择要添加到的文档" />
                   </SelectTrigger>
                   <SelectContent>
-                    {documents.map((doc) => (
+                    {documents.list.map((doc) => (
                       <SelectItem key={doc.id} value={doc.id}>
                         {doc.name}
                       </SelectItem>
@@ -184,17 +185,18 @@ function tryParseJson(text: string): Record<string, unknown> | null {
 
 export default function ChunkManagePage() {
   const chunks = useChunkStore((state) => state.chunks)
+  const loading = useChunkStore((state) => state.loading)
   const selectedDocumentId = useChunkStore((state) => state.selectedDocumentId)
   const setSelectedDocumentId = useChunkStore(
     (state) => state.setSelectedDocumentId,
   )
-  const searchQuery = useChunkStore((state) => state.searchQuery)
-  const setSearchQuery = useChunkStore((state) => state.setSearchQuery)
+  const keyword = useChunkStore((state) => state.keyword)
+  const setKeyword = useChunkStore((state) => state.setKeyword)
   const loadChunks = useChunkStore((state) => state.load)
   const remove = useChunkStore((state) => state.remove)
   const documents = useDocumentStore((state) => state.documents)
   const loadDocuments = useDocumentStore((state) => state.load)
-  const [viewingChunk, setViewingChunk] = useState<ChunkDto | null>(null)
+  const [viewingChunk, setViewingChunk] = useState<ChunkVo | null>(null)
   const [searchParams] = useSearchParams()
   const selectedKbId = useKnowledgeBaseStore((state) => state.selectedKbId)
 
@@ -207,31 +209,27 @@ export default function ChunkManagePage() {
   }, [searchParams])
 
   useEffect(() => {
+    // 查询知识库内所有文档
     void loadDocuments(selectedKbId || undefined).catch(() => undefined)
   }, [loadDocuments, selectedKbId])
 
   useEffect(() => {
-    void loadChunks(
-      selectedDocumentId || undefined,
-      selectedKbId || undefined,
-    ).catch(() => undefined)
-  }, [selectedDocumentId, selectedKbId, loadChunks])
+    // 查询知识库内所有切片
+    void loadChunks(selectedKbId || undefined).catch(() => undefined)
+  }, [selectedKbId, loadChunks])
 
-  const docNameMap = new Map(documents.map((doc) => [doc.id, doc.name]))
-  const selectedDocName = docNameMap.get(selectedDocumentId) ?? ''
-
-  const filteredChunks = chunks.filter((chunk) => {
-    const chunkId = `${chunk.id}.${chunk.index}`
-    const matchesDoc =
-      !selectedDocumentId || chunk.documentId === selectedDocumentId
-    const matchesQuery =
-      !searchQuery ||
-      chunkId.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      chunk.content.toLowerCase().includes(searchQuery.toLowerCase())
-    return matchesDoc && matchesQuery
+  // 无限滚动加载更多切片
+  const scrollContainerRef = useInfiniteScroll({
+    hasMore: chunks.haveNext,
+    loading: loading,
+    threshold: 500,
+    onLoadMore: () => void loadChunks(selectedKbId || undefined),
   })
 
-  const handleDelete = async (chunk: ChunkDto) => {
+  const docNameMap = new Map(documents.list.map((doc) => [doc.id, doc.name]))
+  const selectedDocName = docNameMap.get(selectedDocumentId) ?? ''
+
+  const handleDelete = async (chunk: ChunkVo) => {
     try {
       await remove(chunk.id)
       toast.success('切片已删除')
@@ -247,7 +245,7 @@ export default function ChunkManagePage() {
           <div>
             {/* <h1 className="text-xl font-semibold text-text-main">切片管理</h1> */}
             <p className="mt-0.5 text-sm text-text-muted">
-              共 {filteredChunks.length} 切片
+              共 {chunks.total} 切片
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
@@ -255,9 +253,9 @@ export default function ChunkManagePage() {
               <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-text-muted" />
               <Input
                 className="w-64 pl-9 bg-white"
-                placeholder="搜索切片 ID"
-                value={searchQuery}
-                onChange={(event) => setSearchQuery(event.target.value)}
+                placeholder="搜索切片内容"
+                value={keyword}
+                onChange={(event) => setKeyword(event.target.value)}
               />
             </div>
             <Select
@@ -271,7 +269,7 @@ export default function ChunkManagePage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">全部文档</SelectItem>
-                {documents.map((doc) => (
+                {documents.list.map((doc) => (
                   <SelectItem key={doc.id} value={doc.id}>
                     {doc.name}
                   </SelectItem>
@@ -286,17 +284,18 @@ export default function ChunkManagePage() {
         </div>
       </div>
 
-      <div className="mt-4 flex-1 min-h-0 overflow-y-auto pr-1">
-        {filteredChunks.length === 0 ? (
+      <div
+        className="mt-4 flex-1 min-h-0 overflow-y-auto pr-1"
+        ref={scrollContainerRef}
+      >
+        {chunks.total === 0 ? (
           <div className="flex h-64 flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-border-subtle bg-panel text-sm text-text-muted">
             <Layers className="size-8 text-text-muted" />
-            {searchQuery || selectedDocumentId
-              ? '未找到匹配的切片'
-              : '暂无切片'}
+            {keyword || selectedDocumentId ? '未找到匹配的切片' : '暂无切片'}
           </div>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {filteredChunks.map((chunk) => (
+            {chunks.list.map((chunk) => (
               <div
                 key={chunk.id}
                 className="group flex flex-col rounded-lg border border-border-subtle bg-panel p-4 transition-shadow hover:shadow-md"

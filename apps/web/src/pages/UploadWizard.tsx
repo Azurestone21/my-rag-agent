@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useKnowledgeBaseStore } from '@/store/knowledgeBase'
 import { api } from '@/service'
-import type { DocumentDto, ChunkProcessConfig } from '@my-rag-agent/shared'
+import type { DocumentVo, ChunkProcessConfig } from '@my-rag-agent/shared'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -472,7 +472,7 @@ function Step2({ state, update }: StepProps) {
 
 interface Step3Props {
   state: WizardState
-  result: DocumentDto | null
+  result: DocumentVo | null
   error: string | null
 }
 
@@ -541,7 +541,7 @@ export default function UploadWizardPage() {
   const selectedKbId = useKnowledgeBaseStore((s) => s.selectedKbId)
   const refreshKbList = useKnowledgeBaseStore((s) => s.load)
   const [state, setState] = useState<WizardState>(defaultState)
-  const [result, setResult] = useState<DocumentDto | null>(null)
+  const [result, setResult] = useState<DocumentVo | null>(null)
   const [error, setError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const cancalRef = useRef<boolean>(false)

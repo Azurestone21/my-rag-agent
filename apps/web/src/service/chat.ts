@@ -1,8 +1,8 @@
-import type { SearchResultDto } from '@my-rag-agent/shared'
+import type { SearchVo } from '@my-rag-agent/shared'
 import { API_BASE, getToken } from './request'
 
 type StreamCallbacks = {
-  onSources: (sources: SearchResultDto[]) => void
+  onSources: (sources: SearchVo[]) => void
   onContent: (delta: string) => void
   onDone: (fullAnswer: string) => void
   onError: (message: string) => void

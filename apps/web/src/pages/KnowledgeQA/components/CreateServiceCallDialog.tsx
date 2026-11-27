@@ -13,12 +13,12 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useChatStore } from '@/store/chat'
 import { useKnowledgeBaseStore } from '@/store/knowledgeBase'
-import type { ServiceCallDto } from '@my-rag-agent/shared'
+import type { ServiceCallVo } from '@my-rag-agent/shared'
 
 type CreateServiceCallDialogProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
-  onCreated: (service: ServiceCallDto) => void
+  onCreated: (service: ServiceCallVo) => void
 }
 
 export default function CreateServiceCallDialog({

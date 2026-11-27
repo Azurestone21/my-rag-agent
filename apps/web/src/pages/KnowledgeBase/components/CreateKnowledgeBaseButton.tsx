@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Pencil, Plus } from 'lucide-react'
 import { toast } from 'sonner'
-import type { KnowledgeBaseDto } from '@my-rag-agent/shared'
+import type { KnowledgeBaseVo } from '@my-rag-agent/shared'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -21,7 +21,7 @@ import { useKnowledgeBaseStore } from '@/store/knowledgeBase'
 
 type Props = {
   /** 编辑模式：传入要编辑的知识库；创建模式不传 */
-  kb?: KnowledgeBaseDto
+  kb?: KnowledgeBaseVo
   /** 自定义触发按钮，不传则使用默认按钮（创建模式显示"创建知识库"，编辑模式显示铅笔图标） */
   trigger?: React.ReactNode
 }

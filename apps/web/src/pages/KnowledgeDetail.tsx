@@ -12,7 +12,7 @@ import KnowledgeSearch from './KnowledgeSearch'
 import KnowledgeQA from './KnowledgeQA'
 import { useEffect, useState } from 'react'
 import { knowledgeBaseApi } from '@/service/knowledge-base'
-import type { KnowledgeBaseDto } from '@my-rag-agent/shared'
+import type { KnowledgeBaseVo } from '@my-rag-agent/shared'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useKnowledgeBaseStore } from '@/store/knowledgeBase'
 
@@ -47,7 +47,7 @@ export default function KnowledgeDetail() {
   const selectKb = useKnowledgeBaseStore((state) => state.selectKb)
 
   const { id } = useParams()
-  const [knowledgeBase, setKnowledgeBase] = useState<KnowledgeBaseDto>()
+  const [knowledgeBase, setKnowledgeBase] = useState<KnowledgeBaseVo>()
   const [activeTab, setActiveTab] = useState('documents')
 
   const getKnowledgeBaseDetail = async (id: string) => {

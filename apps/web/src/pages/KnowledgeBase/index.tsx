@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Database, Trash2 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import type { KnowledgeBaseDto } from '@my-rag-agent/shared'
+import type { KnowledgeBaseVo } from '@my-rag-agent/shared'
 import KnowledgeBaseDialog from '@/pages/KnowledgeBase/components/CreateKnowledgeBaseButton'
 import { Button } from '@/components/ui/button'
 import {
@@ -23,13 +23,13 @@ export default function KnowledgeBasePage() {
   const deleteKb = useKnowledgeBaseStore((state) => state.deleteKb)
   const load = useKnowledgeBaseStore((state) => state.load)
   const navigate = useNavigate()
-  const [deletingKb, setDeletingKb] = useState<KnowledgeBaseDto | null>(null)
+  const [deletingKb, setDeletingKb] = useState<KnowledgeBaseVo | null>(null)
 
   useEffect(() => {
     void load().catch(() => undefined)
   }, [load])
 
-  const handleOpen = (kb: KnowledgeBaseDto) => {
+  const handleOpen = (kb: KnowledgeBaseVo) => {
     selectKb(kb.id)
     navigate(`/knowledge-detail/${kb.id}`)
   }
@@ -107,7 +107,11 @@ export default function KnowledgeBasePage() {
               </div>
 
               <div className="mt-4 flex items-center justify-between border-t border-border-subtle pt-3">
-                <Button variant="outline" size="sm" onClick={() => handleOpen(kb)}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleOpen(kb)}
+                >
                   进入知识库
                 </Button>
                 <div className="flex items-center gap-1">
@@ -144,7 +148,8 @@ export default function KnowledgeBasePage() {
           <DialogHeader>
             <DialogTitle>删除知识库</DialogTitle>
             <DialogDescription>
-              确定删除知识库「{deletingKb?.name}」吗？其下所有文档与切片将一并删除，此操作不可恢复。
+              确定删除知识库「{deletingKb?.name}
+              」吗？其下所有文档与切片将一并删除，此操作不可恢复。
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

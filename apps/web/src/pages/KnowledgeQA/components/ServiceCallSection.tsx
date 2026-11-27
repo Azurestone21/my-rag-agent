@@ -4,10 +4,10 @@ import { toast } from 'sonner'
 import CreateServiceCallDialog from '@/pages/KnowledgeQA/components/CreateServiceCallDialog'
 import { Button } from '@/components/ui/button'
 import { useChatStore } from '@/store/chat'
-import type { ServiceCallDto } from '@my-rag-agent/shared'
+import type { ServiceCallVo } from '@my-rag-agent/shared'
 
 type ServiceCallSectionProps = {
-  onViewService: (service: ServiceCallDto) => void
+  onViewService: (service: ServiceCallVo) => void
 }
 
 export default function ServiceCallSection({

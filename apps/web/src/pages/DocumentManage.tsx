@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 import { FileText, Search, Upload } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import type { DocumentDto } from '@my-rag-agent/shared'
+import type { DocumentVo } from '@my-rag-agent/shared'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -49,21 +49,15 @@ const importMethodMap: Record<number, string> = {
 export default function DocumentManagePage() {
   const navigate = useNavigate()
   const documents = useDocumentStore((state) => state.documents)
-  const searchQuery = useDocumentStore((state) => state.searchQuery)
-  const setSearchQuery = useDocumentStore((state) => state.setSearchQuery)
+  const searchName = useDocumentStore((state) => state.searchName)
+  const setSearchName = useDocumentStore((state) => state.setSearchName)
   const load = useDocumentStore((state) => state.load)
   const remove = useDocumentStore((state) => state.remove)
   const selectedKbId = useKnowledgeBaseStore((state) => state.selectedKbId)
 
   useEffect(() => {
-    void load(selectedKbId || undefined).catch(() => undefined)
-  }, [selectedKbId, load])
-
-  const filteredDocuments = documents.filter(
-    (doc) =>
-      doc.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      doc.id.toLowerCase().includes(searchQuery.toLowerCase()),
-  )
+    void load(selectedKbId, searchName).catch(() => undefined)
+  }, [selectedKbId, searchName, load])
 
   const handleDelete = async (id: string, name: string) => {
     try {
@@ -84,7 +78,7 @@ export default function DocumentManagePage() {
     }
   }
 
-  const columns: Column<DocumentDto>[] = [
+  const columns: Column<DocumentVo>[] = [
     {
       key: 'name',
       title: '文档名称 / ID',
@@ -185,7 +179,7 @@ export default function DocumentManagePage() {
         <div>
           {/* <h1 className="text-xl font-semibold text-text-main">文档管理</h1> */}
           <p className="mt-0.5 text-sm text-text-muted">
-            共 {documents.length} 个文档
+            共 {documents.total} 个文档
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -194,8 +188,8 @@ export default function DocumentManagePage() {
             <Input
               className="w-64 pl-9 bg-white"
               placeholder="搜索文档名称"
-              value={searchQuery}
-              onChange={(event) => setSearchQuery(event.target.value)}
+              value={searchName}
+              onChange={(event) => setSearchName(event.target.value)}
             />
           </div>
           <Button onClick={() => navigate('/upload')}>
@@ -206,7 +200,7 @@ export default function DocumentManagePage() {
       </div>
 
       <div className="overflow-hidden rounded-lg">
-        <DataTable columns={columns} data={filteredDocuments} />
+        <DataTable columns={columns} data={documents.list} havePrev={documents.havePrev} haveNext={documents.haveNext} />
       </div>
     </div>
   )

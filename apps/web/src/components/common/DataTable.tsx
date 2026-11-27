@@ -29,6 +29,8 @@ interface DataTableProps<T> {
   data: T[]
   loading?: boolean
   pageSize?: number
+  havePrev?: boolean
+  haveNext?: boolean
 }
 
 export function DataTable<T>({
@@ -36,6 +38,8 @@ export function DataTable<T>({
   data,
   loading = false,
   pageSize = 10,
+  havePrev = false,
+  haveNext = true,
 }: DataTableProps<T>) {
   // 2. 简单的分页状态
   const [currentPage, setCurrentPage] = useState(1)
@@ -139,7 +143,7 @@ export function DataTable<T>({
             variant="outline"
             size="sm"
             onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-            disabled={currentPage === 1 || loading}
+            disabled={currentPage === 1 || loading || !havePrev}
           >
             上一页
           </Button>
@@ -150,7 +154,7 @@ export function DataTable<T>({
             variant="outline"
             size="sm"
             onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-            disabled={currentPage === totalPages || loading}
+            disabled={currentPage === totalPages || loading || !haveNext}
           >
             下一页
           </Button>

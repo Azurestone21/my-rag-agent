@@ -1,4 +1,4 @@
-import type { DocumentDto, ChunkProcessConfig } from '@my-rag-agent/shared'
+import type { DocumentVo, ChunkProcessConfig, PageVo, DocumentGetPageDto } from '@my-rag-agent/shared'
 import { request, toQuery } from './request'
 
 export const documentApi = {
@@ -6,8 +6,13 @@ export const documentApi = {
    * 获取文档列表，可按知识库过滤
    * @param knowledgeBaseId 知识库 ID
    */
-  list: (knowledgeBaseId?: string) =>
-    request<DocumentDto[]>(`/documents${toQuery({ knowledgeBaseId })}`),
+  list: (dto: DocumentGetPageDto) =>{
+    return request<PageVo<DocumentVo>>(`/documents/page`, {
+      method: 'POST',
+      body: JSON.stringify(dto),
+    })
+  },
+    
   /**
    * 上传文档（multipart），仅支持 .csv/.xlsx/.xls
    * @param knowledgeBaseId 所属知识库
@@ -25,7 +30,7 @@ export const documentApi = {
     if (config) {
       query.config = JSON.stringify(config)
     }
-    return request<DocumentDto>(`/documents/upload${toQuery(query)}`, {
+    return request<DocumentVo>(`/documents/upload${toQuery(query)}`, {
       method: 'POST',
       body: form,
     })
@@ -40,7 +45,7 @@ export const documentApi = {
    * 获取单个文档详情
    * @param id 文档 ID
    */
-  get: (id: string) => request<DocumentDto>(`/documents/${id}`),
+  get: (id: string) => request<DocumentVo>(`/documents/${id}`),
   delete: (id: string) =>
     request<void>(`/documents/${id}`, { method: 'DELETE' }),
 }
