@@ -76,8 +76,7 @@ my-rag-agent/
 ├── docker/
 │   └── initdb/              # PostgreSQL 初始化脚本（启用 pgvector）
 ├── docker-compose.yml       # postgres + api + web 一键启动
-├── .env.example             # 环境变量模板
-└── 项目开发计划.md             # 计划、进度与后续路线
+└── .env.example             # 环境变量模板
 ```
 
 ## 主要 API
@@ -95,5 +94,4 @@ my-rag-agent/
 
 ## 文档
 
-- [项目开发计划.md](./项目开发计划.md)：MVP 进度与「九、后续开发计划」
 - [AGENTS.md](./AGENTS.md)：协作约定（供 Codex/Claude 等 AI 助手遵循）
