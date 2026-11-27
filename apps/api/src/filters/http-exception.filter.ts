@@ -9,7 +9,7 @@ import {
   getHttpStatusMessageZh,
   isDefaultHttpStatusMessage,
 } from '../constants/http-status-message.js';
-import { ResponseDto } from '../dto/response.dto.js'; 
+import { ResponseVo } from '../vo/response.vo.js'; 
 
 @Catch(HttpException) // 捕获 HttpException 异常
 export class HttpExceptionFilter implements ExceptionFilter {
@@ -20,7 +20,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
     const message = this.extractErrorMessage(exception);
 
-    const standardResponse: ResponseDto<null> = {
+    const standardResponse: ResponseVo<null> = {
       code: statusCode,
       message: this.toChineseMessage(statusCode, message),
       data: null, // 异常时 data 通常为 null
