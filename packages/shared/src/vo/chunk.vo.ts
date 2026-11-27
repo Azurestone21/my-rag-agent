@@ -1,4 +1,4 @@
-export interface ChunkDto {
+export interface ChunkVo {
   id: string
   documentId: string
   index: number
@@ -7,7 +7,7 @@ export interface ChunkDto {
   updatedAt: string
 }
 
-export interface ChunkProcessResultDto {
+export interface ChunkProcessVo {
   documentId: string
   chunkCount: number
 }

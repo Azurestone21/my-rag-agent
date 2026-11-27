@@ -1,4 +1,4 @@
-export interface ServiceCallDto {
+export interface ServiceCallVo {
   id: string
   name: string
   topK: number

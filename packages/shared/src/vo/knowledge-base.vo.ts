@@ -1,4 +1,4 @@
-export interface KnowledgeBaseDto {
+export interface KnowledgeBaseVo {
   id: string
   name: string
   description: string
