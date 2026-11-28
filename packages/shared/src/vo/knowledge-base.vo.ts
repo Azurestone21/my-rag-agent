@@ -1,8 +1,10 @@
 export interface KnowledgeBaseVo {
-  id: string
-  name: string
-  description: string
-  documentCount: number
-  chunkCount: number
-  updatedAt: string
+  id: string;
+  name: string;
+  description: string;
+  documentCount: number;
+  workspaceId: string;
+  chunkCount: number;
+  createdAt: string;
+  updatedAt: string;
 }
