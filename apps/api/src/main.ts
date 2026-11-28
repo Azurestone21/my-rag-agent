@@ -13,7 +13,7 @@ async function bootstrap() {
   const config = app.get(ConfigService);
   app.useGlobalPipes(
     new ValidationPipe({
-      whitelist: true,
+      whitelist: true, // 自动剥离 DTO 中没有任何校验装饰器的属性
       transform: true,
     }),
   );

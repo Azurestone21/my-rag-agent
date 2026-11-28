@@ -1,16 +1,9 @@
-import {
-  Column,
-  CreateDateColumn,
-  Entity,
-  JoinColumn,
-  ManyToOne,
-  PrimaryColumn,
-  UpdateDateColumn,
-} from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne, PrimaryColumn } from 'typeorm';
 import { KnowledgeBase } from './knowledge-base.entity.js';
+import { Base } from './base.entity.js';
 
 @Entity('documents')
-export class Document {
+export class Document extends Base {
   @PrimaryColumn('uuid', {
     default: () => 'gen_random_uuid()',
     comment: '文档 ID',
@@ -41,10 +34,18 @@ export class Document {
   @Column({ type: 'int', default: 0, comment: '切片数量' })
   chunkCount: number;
 
-  @Column({ type: 'int', default: 1, comment: '导入方式（1: 本地上传，2: 从 URL 导入）' })
+  @Column({
+    type: 'int',
+    default: 1,
+    comment: '导入方式（1: 本地上传，2: 从 URL 导入）',
+  })
   importMethod: number;
 
-  @Column({ type: 'int', default: 1, comment: '处理策略（1: 默认，2: 自定义分段）' })
+  @Column({
+    type: 'int',
+    default: 1,
+    comment: '处理策略（1: 默认，2: 自定义分段）',
+  })
   strategy: number;
 
   @Column({
@@ -53,10 +54,4 @@ export class Document {
     comment: '文件处理配置（分段/表头/数据行等）',
   })
   config: Record<string, unknown> | null;
-
-  @CreateDateColumn({ type: 'timestamptz', comment: '创建时间' })
-  createdAt: Date;
-
-  @UpdateDateColumn({ type: 'timestamptz', comment: '更新时间' })
-  updatedAt: Date;
 }

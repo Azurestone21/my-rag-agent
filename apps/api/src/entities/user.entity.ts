@@ -13,6 +13,6 @@ export class User extends Base {
   @Column({ type: 'varchar', length: 255, name: 'password', comment: '密码' })
   password: string;
 
-  @Column({ type: 'varchar', length: 255, name: 'role', default: Roles.User, comment: '角色' })
+  @Column({ type: 'int', name: 'role', default: Roles.User, comment: '角色' })
   role: Role;
 }
