@@ -51,13 +51,13 @@ export default function AuthPage() {
 
     try {
       if (mode === 'login') {
-        await login(username.trim(), password)
+        await login({ username: username.trim(), password })
         toast.success('登录成功')
         navigate(redirectTo, { replace: true })
       } else {
         if (password.length < 6) return toast.error('密码至少 6 位')
         if (password !== confirmPassword) return toast.error('两次密码不一致')
-        await register(username.trim(), password, confirmPassword)
+        await register({ username: username.trim(), password, confirmPassword })
         toast.success('注册成功，请登录')
         handleSwitch('login')
       }

@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { authApi } from '@/service/auth'
 import { TOKEN_KEY, USER_KEY } from '@/constants/stroage.constants'
 import { persist } from 'zustand/middleware'
+import type { LoginDto, RegisterDto } from '@my-rag-agent/shared'
 
 interface UserInfo {
   userId: number
@@ -13,12 +14,8 @@ interface AuthState {
   user: UserInfo | null
   workspaces: any[]
   loading: boolean
-  login: (username: string, password: string) => Promise<void>
-  register: (
-    username: string,
-    password: string,
-    confirmPassword: string,
-  ) => Promise<void>
+  login: (dto: LoginDto) => Promise<void>
+  register: (dto: RegisterDto) => Promise<void>
   logout: () => void
   init: () => void
 }
@@ -42,12 +39,12 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
-      login: async (username, password) => {
+      login: async (dto: LoginDto) => {
         set({ loading: true })
         try {
-          const res = await authApi.login(username, password)
+          const res = await authApi.login(dto)
           localStorage.setItem(TOKEN_KEY, res.token)
-          const user: UserInfo = { userId: res.userId, username }
+          const user: UserInfo = { userId: res.userId, username: dto.username }
           localStorage.setItem(USER_KEY, JSON.stringify(user))
           set({
             token: res.token,
@@ -61,10 +58,10 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
-      register: async (username, password, confirmPassword) => {
+      register: async (dto: RegisterDto) => {
         set({ loading: true })
         try {
-          await authApi.register(username, password, confirmPassword)
+          await authApi.register(dto)
           set({ loading: false })
         } catch (e) {
           set({ loading: false })
