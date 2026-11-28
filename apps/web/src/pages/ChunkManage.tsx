@@ -36,6 +36,7 @@ import { useKnowledgeBaseStore } from '@/store/knowledgeBase'
 import { formatDateTime } from '@/lib/format'
 import { ConfirmDelete } from '@/components/common/ConfirmDelete'
 import { useInfiniteScroll } from '@/hooks/useInfiniteScroll'
+import { CustomSelect } from '@/components/common/CustomSelect'
 
 type ChunkDialogProps =
   | {
@@ -216,7 +217,7 @@ export default function ChunkManagePage() {
   useEffect(() => {
     // 查询知识库内所有切片
     void loadChunks(selectedKbId || undefined).catch(() => undefined)
-  }, [selectedKbId, loadChunks])
+  }, [selectedKbId, loadChunks, selectedDocumentId, keyword])
 
   // 无限滚动加载更多切片
   const scrollContainerRef = useInfiniteScroll({
@@ -238,6 +239,15 @@ export default function ChunkManagePage() {
     }
   }
 
+  const docList = [
+    { value: 'all', name: '全部文档' },
+    ...(documents?.list || []).map((doc) => ({
+      // 👈 加个 || [] 防报错
+      value: doc.id,
+      name: doc.name,
+    })),
+  ]
+
   return (
     <div className="flex h-full flex-col overflow-auto">
       <div className="shrink-0 space-y-4">
@@ -258,24 +268,13 @@ export default function ChunkManagePage() {
                 onChange={(event) => setKeyword(event.target.value)}
               />
             </div>
-            <Select
+            <CustomSelect
+              list={docList}
               value={selectedDocumentId || 'all'}
-              onValueChange={(value) =>
+              setValue={(value) =>
                 setSelectedDocumentId(value === 'all' ? '' : value)
               }
-            >
-              <SelectTrigger className="w-48 bg-white">
-                <SelectValue placeholder="筛选文档" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">全部文档</SelectItem>
-                {documents.list.map((doc) => (
-                  <SelectItem key={doc.id} value={doc.id}>
-                    {doc.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            />
             <ChunkDialog
               documentId={selectedDocumentId}
               documentName={selectedDocName}

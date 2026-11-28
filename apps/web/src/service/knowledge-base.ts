@@ -1,4 +1,8 @@
-import type { KnowledgeBaseVo } from '@my-rag-agent/shared'
+import type {
+  CreateKnowledgeBaseDto,
+  KnowledgeBaseVo,
+  UpdateKnowledgeBaseDto,
+} from '@my-rag-agent/shared'
 import { request } from './request'
 
 export const knowledgeBaseApi = {
@@ -7,28 +11,29 @@ export const knowledgeBaseApi = {
    * @returns 知识库列表
    */
   list: () => request<KnowledgeBaseVo[]>('/knowledge-bases'),
+
   /**
    * 创建知识库
-   * @param name 名称
-   * @param description 描述
+   * @param dto 创建知识库 DTO
    * @returns 知识库
    */
-  create: (name: string, description: string) =>
+  create: (dto: CreateKnowledgeBaseDto) =>
     request<KnowledgeBaseVo>('/knowledge-bases', {
       method: 'POST',
-      body: JSON.stringify({ name, description }),
+      body: JSON.stringify(dto),
     }),
+
   /**
    * 更新知识库
    * @param id 知识库 ID
-   * @param name 名称（可选）
-   * @param description 描述（可选）
+   * @param dto 更新知识库 DTO
    */
-  update: (id: string, name?: string, description?: string) =>
-    request<KnowledgeBaseVo>(`/knowledge-bases/${id}`, {
+  update: (dto: UpdateKnowledgeBaseDto) =>
+    request<KnowledgeBaseVo>(`/knowledge-bases/${dto.id}`, {
       method: 'PATCH',
-      body: JSON.stringify({ name, description }),
+      body: JSON.stringify(dto),
     }),
+
   /**
    * 删除知识库（级联删除其文档与切片）
    * @param id 知识库 ID
@@ -41,6 +46,5 @@ export const knowledgeBaseApi = {
    * @param id 知识库 ID
    * @returns 知识库
    */
-  getById: (id: string) =>
-    request<KnowledgeBaseVo>(`/knowledge-bases/${id}`),
+  getById: (id: string) => request<KnowledgeBaseVo>(`/knowledge-bases/${id}`),
 }

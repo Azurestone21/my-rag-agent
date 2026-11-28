@@ -1,5 +1,9 @@
 import { create } from 'zustand'
-import type { KnowledgeBaseVo } from '@my-rag-agent/shared'
+import type {
+  CreateKnowledgeBaseDto,
+  KnowledgeBaseVo,
+  UpdateKnowledgeBaseDto,
+} from '@my-rag-agent/shared'
 import { api } from '@/service'
 import { persist } from 'zustand/middleware'
 
@@ -9,16 +13,9 @@ type KnowledgeBaseState = {
   loading: boolean
   load: () => Promise<void>
   selectKb: (id: string) => void
-  createKb: (
-    name: string,
-    description: string,
-  ) => Promise<KnowledgeBaseVo>
+  createKb: (dto: CreateKnowledgeBaseDto) => Promise<KnowledgeBaseVo>
   deleteKb: (id: string) => Promise<void>
-  updateKb: (
-    id: string,
-    name: string,
-    description: string,
-  ) => Promise<KnowledgeBaseVo>
+  updateKb: (dto: UpdateKnowledgeBaseDto) => Promise<KnowledgeBaseVo>
 }
 
 export const useKnowledgeBaseStore = create<KnowledgeBaseState>()(
@@ -46,8 +43,8 @@ export const useKnowledgeBaseStore = create<KnowledgeBaseState>()(
         }
       },
       selectKb: (id) => set({ selectedKbId: id }),
-      createKb: async (name, description) => {
-        const kb = await api.knowledgeBase.create(name, description)
+      createKb: async (dto) => {
+        const kb = await api.knowledgeBase.create(dto)
         set((state) => ({
           knowledgeBases: [...state.knowledgeBases, kb],
           selectedKbId: kb.id,
@@ -67,11 +64,11 @@ export const useKnowledgeBaseStore = create<KnowledgeBaseState>()(
           }
         })
       },
-      updateKb: async (id, name, description) => {
-        const updated = await api.knowledgeBase.update(id, name, description)
+      updateKb: async (dto) => {
+        const updated = await api.knowledgeBase.update(dto)
         set((state) => ({
           knowledgeBases: state.knowledgeBases.map((kb) =>
-            kb.id === id ? updated : kb,
+            kb.id === dto.id ? updated : kb,
           ),
         }))
         return updated

@@ -42,10 +42,17 @@ export default function KnowledgeBaseDialog({ kb, trigger }: Props) {
     }
     try {
       if (isEdit) {
-        await updateKb(kb!.id, name.trim(), description.trim())
+        await updateKb({
+          id: kb!.id,
+          name: name.trim(),
+          description: description.trim(),
+        })
         toast.success('更新成功')
       } else {
-        await createKb(name.trim(), description.trim())
+        await createKb({
+          name: name.trim(),
+          description: description.trim(),
+        })
         toast.success(`知识库「${name.trim()}」创建成功`)
       }
       setOpen(false)
