@@ -9,6 +9,7 @@ import {
   ParseUUIDPipe,
   Post,
   Query,
+  Req,
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
@@ -21,6 +22,8 @@ import { DocumentVo } from './vo/document.vo.js';
 import { DocumentService } from './document.service.js';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { DocumentGetPageDto } from './dto/document-get-page.dto.js';
+import { RequireWorkspace } from '../../decorators/RequireWorkspace.decorator.js';
+import type { Request } from 'express';
 
 @ApiTags('文档')
 @Controller('documents')
@@ -28,6 +31,7 @@ export class DocumentController {
   constructor(private readonly service: DocumentService) {}
 
   @ApiOperation({ summary: '上传文档' })
+  @RequireWorkspace(true)
   @Post('upload')
   @UseInterceptors(
     FileInterceptor('file', {
@@ -65,6 +69,7 @@ export class DocumentController {
   upload(
     @UploadedFile() file: Express.Multer.File,
     @Query('knowledgeBaseId') knowledgeBaseId: string,
+    @Req() req: Request,
     @Query('config') configStr?: string,
   ): Promise<DocumentVo> {
     if (!file) {
@@ -86,33 +91,47 @@ export class DocumentController {
         throw new BadRequestException('config 参数不是合法 JSON');
       }
     }
-    return this.service.create(knowledgeBaseId, file, config);
+    return this.service.create(knowledgeBaseId, file, req.workspaceId!, config);
   }
 
   @ApiOperation({ summary: '取消上传文档' })
+  @RequireWorkspace(true)
   @Post('cancel/:id')
-  cancel(@Param('id', ParseUUIDPipe) id: string): Promise<boolean> {
-    return this.service.cancel(id);
+  cancel(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() req: Request,
+  ): Promise<boolean> {
+    return this.service.cancel(id, req.workspaceId!);
   }
 
   @ApiOperation({ summary: '查询所有文档' })
+  @RequireWorkspace(true)
   @Post('page')
   @HttpCode(200)
   page(
     @Body() dto: DocumentGetPageDto,
+    @Req() req: Request,
   ): Promise<PageVo<DocumentVo>> {
-    return this.service.page(dto);
+    return this.service.page(dto, req.workspaceId!);
   }
 
   @ApiOperation({ summary: '查询文档详情' })
+  @RequireWorkspace(true)
   @Get(':id')
-  findOne(@Param('id', ParseUUIDPipe) id: string): Promise<DocumentVo> {
-    return this.service.findOne(id);
+  findOne(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() req: Request,
+  ): Promise<DocumentVo> {
+    return this.service.findOne(id, req.workspaceId!);
   }
 
   @ApiOperation({ summary: '删除文档' })
+  @RequireWorkspace(true)
   @Delete(':id')
-  remove(@Param('id', ParseUUIDPipe) id: string): Promise<boolean> {
-    return this.service.remove(id);
+  remove(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() req: Request,
+  ): Promise<boolean> {
+    return this.service.remove(id, req.workspaceId!);
   }
 }

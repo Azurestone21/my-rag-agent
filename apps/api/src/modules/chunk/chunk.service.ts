@@ -20,6 +20,7 @@ import { Chunk } from '../../entities/chunk.entity.js';
 import { Document } from '../../entities/document.entity.js';
 import { EmbeddingsService } from '../embeddings/embeddings.service.js';
 import { ChunkGetPageDto } from './dto/get-page.dto.js';
+import { KnowledgeBase } from '../../entities/knowledge-base.entity.js';
 
 const DEFAULT_TEXT_SPLITTER = {
   chunkSize: 500,
@@ -142,6 +143,8 @@ export class ChunkService {
     private readonly chunks: Repository<Chunk>,
     @InjectRepository(Document)
     private readonly documents: Repository<Document>,
+    @InjectRepository(KnowledgeBase)
+    private readonly kbRepository: Repository<KnowledgeBase>,
     private readonly embeddings: EmbeddingsService,
   ) {}
 
@@ -254,7 +257,13 @@ export class ChunkService {
     }
   }
 
-  async page(dto: ChunkGetPageDto): Promise<PageVo<ChunkVo>> {
+  /**
+   * 分页查询切片列表
+   */
+  async page(
+    dto: ChunkGetPageDto,
+    workspaceId: string,
+  ): Promise<PageVo<ChunkVo>> {
     let { pageNum, pageSize, documentId, knowledgeBaseId, keyword } = dto;
     if (pageSize > 500) {
       pageSize = 500;
@@ -262,6 +271,9 @@ export class ChunkService {
     const qb = this.chunks
       .createQueryBuilder('chunk')
       .innerJoin('chunk.document', 'doc')
+      .innerJoin('doc.knowledgeBase', 'kb', 'kb.workspaceId = :workspaceId', {
+        workspaceId,
+      })
       .orderBy('chunk.chunkIndex', 'ASC')
       .skip((pageNum - 1) * pageSize)
       .take(pageSize);
@@ -291,16 +303,33 @@ export class ChunkService {
     };
   }
 
-  async findOne(id: string): Promise<ChunkVo> {
-    const entity = await this.chunks.findOneBy({ id });
+  async findOne(id: string, workspaceId: string): Promise<ChunkVo> {
+    const entity = await this.chunks
+      .createQueryBuilder('chunk')
+      .innerJoin('chunk.document', 'doc')
+      .innerJoin('doc.knowledgeBase', 'kb', 'kb.workspaceId = :workspaceId', {
+        workspaceId,
+      })
+      .where('chunk.id = :id', { id })
+      .getOne();
     if (!entity) {
       throw new NotFoundException(`切片 ${id} 不存在`);
     }
     return this.toDto(entity);
   }
 
-  async create(documentId: string, content: string): Promise<ChunkVo> {
-    const document = await this.documents.findOneBy({ id: documentId });
+  async create(
+    documentId: string,
+    content: string,
+    workspaceId: string,
+  ): Promise<ChunkVo> {
+    const document = await this.documents
+      .createQueryBuilder('doc')
+      .innerJoin('doc.knowledgeBase', 'kb', 'kb.workspaceId = :workspaceId', {
+        workspaceId,
+      })
+      .where('doc.id = :documentId', { documentId })
+      .getOne();
     if (!document) {
       throw new NotFoundException(`文档 ${documentId} 不存在`);
     }
@@ -317,11 +346,27 @@ export class ChunkService {
     return this.toDto(saved);
   }
 
-  async update(id: string, content: string): Promise<ChunkVo> {
+  async update(
+    id: string,
+    content: string,
+    workspaceId: string,
+  ): Promise<ChunkVo> {
     const entity = await this.chunks.findOneBy({ id });
     if (!entity) {
       throw new NotFoundException(`切片 ${id} 不存在`);
     }
+
+    const check = await this.chunks
+      .createQueryBuilder('chunk')
+      .innerJoin('chunk.document', 'doc')
+      .innerJoin('doc.knowledgeBase', 'kb', 'kb.workspaceId = :workspaceId', {
+        workspaceId,
+      })
+      .where('chunk.id = :id', { id })
+      .getOne();
+
+    if (!check) throw new NotFoundException(`切片 ${id} 不存在或无权访问`);
+
     entity.content = content;
     entity.charCount = content.length;
     entity.embedding = this.toVectorString(
@@ -331,11 +376,17 @@ export class ChunkService {
     return this.toDto(saved);
   }
 
-  async remove(id: string): Promise<boolean> {
-    const result = await this.chunks.delete({ id });
-    if (!result.affected) {
-      throw new NotFoundException(`切片 ${id} 不存在`);
-    }
+  async remove(id: string, workspaceId: string): Promise<boolean> {
+    const check = await this.chunks
+      .createQueryBuilder('chunk')
+      .innerJoin('chunk.document', 'doc')
+      .innerJoin('doc.knowledgeBase', 'kb', 'kb.workspaceId = :workspaceId', {
+        workspaceId,
+      })
+      .where('chunk.id = :id', { id })
+      .getOne();
+    if (!check) throw new NotFoundException(`切片 ${id} 不存在或无权访问`);
+    await this.chunks.delete({ id });
     return true;
   }
 

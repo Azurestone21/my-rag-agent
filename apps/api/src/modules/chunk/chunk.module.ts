@@ -6,10 +6,11 @@ import { Document } from '../../entities/document.entity.js';
 import { EmbeddingsModule } from '../embeddings/embeddings.module.js';
 import { ChunkController } from './chunk.controller.js';
 import { ChunkService } from './chunk.service.js';
+import { KnowledgeBase } from '../../entities/knowledge-base.entity.js';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Chunk, Document]),
+    TypeOrmModule.forFeature([Chunk, Document, KnowledgeBase]),
     EmbeddingsModule,
   ],
   controllers: [ChunkController],

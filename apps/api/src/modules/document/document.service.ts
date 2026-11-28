@@ -9,6 +9,7 @@ import { DocumentVo } from './vo/document.vo.js';
 import { Document } from '../../entities/document.entity.js';
 import { ChunkService } from '../chunk/chunk.service.js';
 import { DocumentGetPageDto } from './dto/document-get-page.dto.js';
+import { KnowledgeBase } from '../../entities/knowledge-base.entity.js';
 
 const ALLOWED_EXTENSIONS = ['.csv', '.xlsx', '.xls', '.txt', '.md'];
 
@@ -19,6 +20,8 @@ export class DocumentService {
   constructor(
     @InjectRepository(Document)
     private readonly repository: Repository<Document>,
+    @InjectRepository(KnowledgeBase)
+    private readonly kbRepository: Repository<KnowledgeBase>,
     private readonly config: ConfigService,
     private readonly chunkService: ChunkService,
   ) {}
@@ -34,8 +37,17 @@ export class DocumentService {
   async create(
     knowledgeBaseId: string,
     file: Express.Multer.File,
+    workspaceId: string,
     config?: ChunkProcessConfig,
   ): Promise<DocumentVo> {
+    const kb = await this.kbRepository.findOneBy({
+      id: knowledgeBaseId,
+      workspaceId,
+    });
+    if (!kb) {
+      throw new NotFoundException('知识库不存在或无权访问');
+    }
+
     const entity = this.repository.create({
       knowledgeBaseId,
       name: decodeFileName(file.originalname),
@@ -55,15 +67,25 @@ export class DocumentService {
     return this.toDto(saved);
   }
 
-  async cancel(id: string): Promise<boolean> {
+  async cancel(id: string, workspaceId: string): Promise<boolean> {
+    await this.findOne(id, workspaceId);
     await this.chunkService.cancelProcess(id);
     return true;
   }
 
-  async page(dto: DocumentGetPageDto): Promise<PageVo<DocumentVo>> {
+  async page(
+    dto: DocumentGetPageDto,
+    workspaceId: string,
+  ): Promise<PageVo<DocumentVo>> {
     const { pageNum, pageSize, name, knowledgeBaseId } = dto;
     const qb = await this.repository
       .createQueryBuilder('document')
+      .innerJoin(
+        'document.knowledgeBase',
+        'kb',
+        'kb.workspaceId = :workspaceId',
+        { workspaceId },
+      )
       .where('document.knowledgeBaseId = :knowledgeBaseId', {
         knowledgeBaseId,
       })
@@ -89,18 +111,37 @@ export class DocumentService {
     };
   }
 
-  async findOne(id: string): Promise<DocumentVo> {
-    const entity = await this.repository.findOneBy({ id });
+  async findOne(id: string, workspaceId: string): Promise<DocumentVo> {
+    const entity = await this.repository
+      .createQueryBuilder('document')
+      .innerJoin(
+        'document.knowledgeBase',
+        'kb',
+        'kb.workspaceId = :workspaceId',
+        { workspaceId },
+      )
+      .where('document.id = :id', { id })
+      .getOne();
     if (!entity) {
       throw new NotFoundException(`文档 ${id} 不存在`);
     }
     return this.toDto(entity);
   }
 
-  async remove(id: string): Promise<boolean> {
-    const entity = await this.repository.findOneBy({ id });
+  async remove(id: string, workspaceId: string): Promise<boolean> {
+    const entity = await this.repository
+      .createQueryBuilder('document')
+      .innerJoin(
+        'document.knowledgeBase',
+        'kb',
+        'kb.workspaceId = :workspaceId',
+        { workspaceId },
+      )
+      .where('document.id = :id', { id })
+      .getOne();
+
     if (!entity) {
-      throw new NotFoundException(`文档 ${id} 不存在`);
+      throw new NotFoundException(`文档 ${id} 不存在或无权访问`);
     }
     await this.repository.delete({ id });
     await fs.unlink(entity.filePath).catch(() => undefined);
