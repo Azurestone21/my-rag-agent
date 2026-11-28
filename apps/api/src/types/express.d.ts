@@ -4,6 +4,7 @@ declare global {
       user?: {
         role?: Role;
       };
+      workspaceId?: string;
     }
   }
 }
