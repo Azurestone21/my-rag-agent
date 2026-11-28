@@ -1,13 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty } from 'class-validator';
-
-import { IsString } from 'class-validator';
-
-import { MinLength } from 'class-validator';
-
-import { MaxLength } from 'class-validator';
-
-export class RegisterDto {
+import { IsNotEmpty, IsString, MinLength, MaxLength } from 'class-validator';
+import { RegisterDto as RegisterDtoShared } from '@my-rag-agent/shared';
+export class RegisterDto implements RegisterDtoShared {
   @ApiProperty({ description: '用户名' })
   @IsNotEmpty()
   @IsString()
