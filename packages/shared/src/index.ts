@@ -3,6 +3,8 @@ export * from "./dto/chunk.dto.js";
 export * from "./dto/document.dto.js";
 export * from "./dto/commonPage.dto.js";
 export * from "./dto/knowledge-base.dto.js";
+export * from "./dto/login.dto.js";
+export * from "./dto/register.dto.js";
 
 export * from "./vo/knowledge-base.vo.js";
 export * from "./vo/document.vo.js";
