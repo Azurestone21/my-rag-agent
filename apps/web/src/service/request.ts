@@ -27,12 +27,17 @@ export async function request<T>(
   path: string,
   init?: RequestInit & { timeout?: number },
 ): Promise<T> {
+  const workspaces = useAuthStore.getState().workspaces
   const headers = new Headers(init?.headers)
 
   // 自动设置 Authorization 头（如果未设置）
   if (!headers.has('Authorization')) {
     const token = getToken()
     if (token) headers.set('Authorization', `Bearer ${token}`)
+  }
+
+  if (workspaces.length) {
+    headers.set('X-Workspace-Id', workspaces[0].id.toString())
   }
 
   // 自动设置 Content-Type 头（FormData 除外）

@@ -11,6 +11,7 @@ interface UserInfo {
 interface AuthState {
   token: string | null
   user: UserInfo | null
+  workspaces: any[]
   loading: boolean
   login: (username: string, password: string) => Promise<void>
   register: (
@@ -27,6 +28,7 @@ export const useAuthStore = create<AuthState>()(
     (set) => ({
       token: null,
       user: null,
+      workspaces: [],
       loading: false,
 
       init: () => {
@@ -50,6 +52,7 @@ export const useAuthStore = create<AuthState>()(
           set({
             token: res.token,
             user,
+            workspaces: res.workspaces,
             loading: false,
           })
         } catch (e) {

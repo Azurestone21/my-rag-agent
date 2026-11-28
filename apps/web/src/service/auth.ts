@@ -1,14 +1,10 @@
+import type { LoginVo } from '@my-rag-agent/shared'
 import { request } from './request'
-
-export interface LoginResponse {
-  userId: number
-  token: string
-}
 
 export const authApi = {
   /** 用户登录，返回 JWT */
   login: (username: string, password: string) =>
-    request<LoginResponse>('/auth/login', {
+    request<LoginVo>('/auth/login', {
       method: 'POST',
       body: JSON.stringify({ username, password }),
     }),
