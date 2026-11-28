@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { unlink } from 'node:fs/promises';
@@ -7,6 +11,7 @@ import { Document } from '../../entities/document.entity.js';
 import { KnowledgeBase } from '../../entities/knowledge-base.entity.js';
 import { CreateKnowledgeBaseDto } from './dto/create-knowledge-base.dto.js';
 import { UpdateKnowledgeBaseDto } from './dto/update-knowledge-base.dto.js';
+import { WorkspaceService } from '../workspace/workspace.service.js';
 
 @Injectable()
 export class KnowledgeBaseService {
@@ -15,9 +20,17 @@ export class KnowledgeBaseService {
     private readonly repository: Repository<KnowledgeBase>,
     @InjectRepository(Document)
     private readonly documentRepository: Repository<Document>,
+    private readonly workspaceService: WorkspaceService,
   ) {}
 
-  async findAll(): Promise<KnowledgeBaseVo[]> {
+  async findAll(
+    workspaceId: string,
+    userId: number,
+  ): Promise<KnowledgeBaseVo[]> {
+    if (!userId) {
+      throw new BadRequestException('用户 ID 不能为空');
+    }
+
     const rows = await this.repository
       .createQueryBuilder('kb')
       .leftJoin('documents', 'doc', 'doc.knowledge_base_id = kb.id')
@@ -29,6 +42,8 @@ export class KnowledgeBaseService {
       .addSelect('kb.updatedAt', 'updatedAt')
       .addSelect('COUNT(DISTINCT doc.id)', 'documentCount')
       .addSelect('COUNT(DISTINCT chunk.id)', 'chunkCount')
+      .addSelect('kb.workspaceId', 'workspaceId')
+      .where('kb.workspaceId = :workspaceId', { workspaceId })
       .groupBy('kb.id')
       .orderBy('kb.createdAt', 'DESC')
       .getRawMany<KnowledgeBaseVo>();
@@ -40,7 +55,7 @@ export class KnowledgeBaseService {
     }));
   }
 
-  async findOne(id: string): Promise<KnowledgeBaseVo> {
+  async findOne(id: string, workspaceId: string): Promise<KnowledgeBaseVo> {
     const row = await this.repository
       .createQueryBuilder('kb')
       .leftJoin('documents', 'doc', 'doc.knowledge_base_id = kb.id')
@@ -53,6 +68,7 @@ export class KnowledgeBaseService {
       .addSelect('COUNT(DISTINCT doc.id)', 'documentCount')
       .addSelect('COUNT(DISTINCT chunk.id)', 'chunkCount')
       .where('kb.id = :id', { id })
+      .andWhere('kb.workspaceId = :workspaceId', { workspaceId })
       .groupBy('kb.id')
       .getRawOne<KnowledgeBaseVo>();
 
@@ -67,37 +83,53 @@ export class KnowledgeBaseService {
     };
   }
 
-  async create(dto: CreateKnowledgeBaseDto): Promise<KnowledgeBaseVo> {
-    const entity = this.repository.create(dto);
+  async create(
+    dto: CreateKnowledgeBaseDto,
+    workspaceId: string,
+  ): Promise<KnowledgeBaseVo> {
+    const entity = this.repository.create({
+      ...dto,
+      workspaceId,
+    });
     const saved = await this.repository.save(entity);
     return this.toDto(saved);
   }
 
-  async update(id: string, dto: UpdateKnowledgeBaseDto): Promise<KnowledgeBaseVo> {
-    const entity = await this.repository.findOneBy({ id });
-    if (!entity) {
+  async update(
+    id: string,
+    dto: UpdateKnowledgeBaseDto,
+    workspaceId: string,
+  ): Promise<KnowledgeBaseVo> {
+    const kb = await this.repository.findOneBy({ id, workspaceId });
+    if (!kb) {
       throw new NotFoundException(`知识库 ${id} 不存在`);
     }
-    Object.assign(entity, dto);
-    const saved = await this.repository.save(entity);
+    Object.assign(kb, dto);
+    const saved = await this.repository.save(kb);
     return this.toDto(saved);
   }
 
-  async remove(id: string): Promise<boolean> {
-    // ① 先查出所有关联文档的磁盘路径（级联删除后就拿不到了）
+  async remove(id: string, workspaceId: string): Promise<boolean> {
+    // 检查知识库是否存在且用户有权限删除
+    const kb = await this.repository.findOneBy({ id, workspaceId });
+    if (!kb) {
+      throw new NotFoundException(`知识库不存在或无权访问`);
+    }
+
+    // 先查出所有关联文档的磁盘路径（级联删除后就拿不到了）
     const docs = await this.documentRepository.find({
       where: { knowledgeBaseId: id },
       select: { filePath: true },
     });
     const filePaths = docs.map((d) => d.filePath);
 
-    // ② 级联删除数据库记录（kb → documents → chunks）
-    const result = await this.repository.delete({ id });
+    // 级联删除数据库记录（kb → documents → chunks）
+    const result = await this.repository.delete({ id, workspaceId });
     if (!result.affected) {
       throw new NotFoundException(`知识库 ${id} 不存在`);
     }
 
-    // ③ 清理磁盘文件（和 document.service.remove 保持一致）
+    // 清理磁盘文件（和 document.service.remove 保持一致）
     await Promise.allSettled(filePaths.map((p) => unlink(p)));
     return true;
   }
@@ -109,6 +141,8 @@ export class KnowledgeBaseService {
       description: entity.description ?? '',
       documentCount: 0,
       chunkCount: 0,
+      workspaceId: entity.workspaceId,
+      createdAt: entity.createdAt.toISOString(),
       updatedAt: entity.updatedAt.toISOString(),
     };
   }

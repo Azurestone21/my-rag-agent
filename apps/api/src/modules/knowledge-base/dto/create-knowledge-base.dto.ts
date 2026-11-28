@@ -1,7 +1,8 @@
 import { IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { CreateKnowledgeBaseDto as CreateKnowledgeDtoShared } from "@my-rag-agent/shared"
 
-export class CreateKnowledgeBaseDto {
+export class CreateKnowledgeBaseDto implements CreateKnowledgeDtoShared {
   @ApiProperty({ description: '知识库名称' })
   @IsString()
   @IsNotEmpty()

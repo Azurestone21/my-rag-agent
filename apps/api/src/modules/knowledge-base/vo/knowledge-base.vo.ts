@@ -17,6 +17,12 @@ export class KnowledgeBaseVo implements KnowledgeBaseVoShared {
   @ApiProperty({ description: '分块数量' })
   chunkCount: number;
 
+  @ApiProperty({ description: '工作空间 ID' })
+  workspaceId: string;
+
+  @ApiProperty({ description: '创建时间' })
+  createdAt: string;
+
   @ApiProperty({ description: '更新时间' }) 
   updatedAt: string;
 }
